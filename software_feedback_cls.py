@@ -11,11 +11,26 @@ parser.add_argument('--early_stopping_patience', default=999, type=int, help='Ho
 parser.add_argument('--LR', default=5e-5, type=int, help='Learning rate for the model')
 parser.add_argument('--EPS', default=1e-6, type=int, help='Epsilon of the model')
 parser.add_argument('--WD', default=0.01, type=int, help='Weight decay of the model')
+parser.add_argument('--cv_folds', default=10, type=int, help='Weight decay of the model')
 parser.add_argument('--do_baseline',  nargs='?', const=True, default=False, type=bool, help='Get the baseline for the given dataset too.')
+parser.add_argument('--do_cv',  nargs='?', const=True, default=False, type=bool, help='Do cross validation evaluation.')
 args = parser.parse_args()
 print(args)
 
 dataset_list = args.dataset_list.split(",")
 
+if args.do_cv and len(dataset_list) > 1:
+    raise Exception("Cannot do cross validation in multi-task setting")
+
 data_getter = DataGetter()
-data_getter.get_selected_datasets(dataset_list)
+
+selected_datasets = data_getter.get_selected_datasets(dataset_list)
+
+if args.do_cv:
+    
+
+### DO BASELINE TRAINING OVER ALL CVs first
+
+### THEN ITERATE OVER CVs if applicable
+
+### ELSE JUST DO TRAINING ON GIVEN TVT SPLIT
