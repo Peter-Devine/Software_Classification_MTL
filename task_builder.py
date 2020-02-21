@@ -1,19 +1,21 @@
 import requests, zipfile, io, os, json
 import pandas as pd
+from task import Task
+from models import get_language_model
 
-class DataGetter:
-    def __init__(self):
-        self.dataset_downloader_dict = {
-            "maalej_2015": self.get_maalej_2015
+class Task_Builder:
+    def __init__(self, random_state):
+        self.random_state = random_state
+        self.task_dict = {
+            "maalej_2015": Task(data_getter_fn=get_maalej_2015, is_multiclass=False, random_state=random_state)
         }
 
-    def get_selected_datasets(self, names_of_datasets):
-        retreived_datasets = {}
+    def build_tasks(self, names_of_datasets, PARAMS):
+        target_task_dict = {}
+        language_model = get_language_model(PARAMS.lm_model_name)
         for dataset_name in names_of_datasets:
-            retreived_dataset = self.dataset_downloader_dict[dataset_name]()
-            retreived_datasets[dataset_name] = retreived_dataset
-
-        return retreived_datasets
+            target_task_dict[dataset_name] = self.task_dict[dataset_name].build_task(language_model, PARAMS)
+        return target_task_dict
 
 
     ######### INDIVIDUAL DATA GETTERS ############
@@ -34,4 +36,9 @@ class DataGetter:
 
         df = pd.DataFrame({"text": [x["title"] + " [SEP] " + x["comment"] if x["title"] is not None else " [SEP] " + x["comment"] for x in data], "label":[x["label"] for x in data]})
 
-        return df
+        train_val_idx = df.sample(frac=0.7, random_state=self.random_state).index
+        test_idx = df.drop(train_val_idx).index
+        train_idx = df[train_val_idx].sample(frac=0.85, random_state=self.random_state).index
+        valid_idx = df[train_val_idx].drop(train_idx).index
+
+        return df[train_idx], df[valid_idx], df[test_idx]
