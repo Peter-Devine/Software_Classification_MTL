@@ -1,6 +1,5 @@
 import argparse
 from task_builder import TaskBuilder
-from data_processor_cv import get_cross_validated_df
 #from baselines import get_NB_baseline_eval_metrics
 from parameters import Parameters
 from ml_training import train_on_tasks
@@ -53,11 +52,11 @@ if len(dataset_list) > 1:
 ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
 
 # Output final results to disk
-with open("./task_eval_metrics.txt","w") as f
+with open("./task_eval_metrics.txt","w") as f:
     f.write( str(task_eval_metrics) )
-with open("./task_test_metrics.txt","w") as f
+with open("./task_test_metrics.txt","w") as f:
     f.write( str(task_test_metrics) )
-with open("./ft_task_eval_metrics.txt","w") as f
+with open("./ft_task_eval_metrics.txt","w") as f:
     f.write( str(ft_task_eval_metrics) )
-with open("./ft_task_test_metrics.txt","w") as f
+with open("./ft_task_test_metrics.txt","w") as f:
     f.write( str(ft_task_test_metrics) )
