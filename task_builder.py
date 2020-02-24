@@ -3,7 +3,7 @@ import pandas as pd
 from task import Task
 from models import get_language_model
 
-class Task_Builder:
+class TaskBuilder:
     def __init__(self, random_state):
         self.random_state = random_state
         self.task_dict = {
