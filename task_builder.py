@@ -7,7 +7,7 @@ class Task_Builder:
     def __init__(self, random_state):
         self.random_state = random_state
         self.task_dict = {
-            "maalej_2015": Task(data_getter_fn=get_maalej_2015, is_multiclass=False, random_state=random_state)
+            "maalej_2015": Task(data_getter_fn=get_maalej_2015, is_multilabel=False, random_state=random_state)
         }
 
     def build_tasks(self, names_of_datasets, PARAMS):
