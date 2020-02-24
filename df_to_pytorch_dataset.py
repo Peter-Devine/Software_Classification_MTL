@@ -29,7 +29,7 @@ def create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_tes
     return train_data, valid_data, test_data
 
 # Multi-class
-def get_dataset_from_df(train_df, valid_df, test_df, PARAMS):
+def get_multiclass_dataset_from_df(train_df, valid_df, test_df, PARAMS):
 
     X_train, X_valid, X_test = get_ids_for_splits(train_df, valid_df, test_df, PARAMS)
 
@@ -77,5 +77,3 @@ def get_multilabel_dataset_from_df(train_df, valid_df, test_df, PARAMS):
     train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS)
 
     return train_data, valid_data, test_data, code_map
-
-def get_multiclass_dataset_from_df(train_df, valid_df, test_df, PARAMS):

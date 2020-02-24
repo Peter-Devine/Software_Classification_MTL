@@ -1,4 +1,4 @@
-from df_to_pytorch_dataset import get_dataset_from_df, get_multiclass_dataset_from_df
+from df_to_pytorch_dataset import get_multiclass_dataset_from_df, get_multiclass_dataset_from_df
 from models import get_cls_model_and_optimizer
 from torch import nn
 from math import ceil
@@ -36,7 +36,7 @@ class Task:
         if self.is_multilabel:
             tensors_and_map = get_multilabel_dataset_from_df(train_tensor_dataset, valid_tensor_dataset, test_tensor_dataset, PARAMS)
         else:
-            tensors_and_map = get_dataset_from_df(train_tensor_dataset, valid_tensor_dataset, test_tensor_dataset, PARAMS)
+            tensors_and_map = get_multiclass_dataset_from_df(train_tensor_dataset, valid_tensor_dataset, test_tensor_dataset, PARAMS)
 
         return tensors_and_map
 
