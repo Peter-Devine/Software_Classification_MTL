@@ -1,4 +1,6 @@
 from transformers import AutoTokenizer
+from torch.utils.data import TensorDataset, DataLoader
+import torch
 
 def get_ids_for_splits(train_df, valid_df, test_df, PARAMS):
 
@@ -13,7 +15,8 @@ def get_ids_for_splits(train_df, valid_df, test_df, PARAMS):
 
     return X_train, X_valid, X_test
 
-def get_dataset_from_tensors(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS):
+# Takes in series representations of X and y for each split and creates a pre-batched dataset for each split
+def create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS):
     def create_dataset(X, y, batch_size):
       X_tensor = torch.LongTensor(np.stack(X.values))
       y_tensor = torch.LongTensor(np.stack(y.values))
@@ -46,7 +49,7 @@ def get_dataset_from_df(train_df, valid_df, test_df, PARAMS):
     y_valid = apply_label_list(valid_df, code_map)
     y_test = apply_label_list(test_df, code_map)
 
-    train_data, valid_data, test_data = get_dataset_from_tensors(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS)
+    train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS)
 
     return train_data, valid_data, test_data, code_map
 
@@ -71,7 +74,7 @@ def get_multilabel_dataset_from_df(train_df, valid_df, test_df, PARAMS):
     y_valid = apply_label_list(valid_df, code_map)
     y_test = apply_label_list(test_df, code_map)
 
-    train_data, valid_data, test_data = get_dataset_from_tensors(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS)
+    train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS)
 
     return train_data, valid_data, test_data, code_map
 
