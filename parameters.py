@@ -1,5 +1,6 @@
 class Parameters:
     def __init__(self,
+                dataset_name_list,
                 lm_model_name,
                 max_length,
                 batch_size_train,
@@ -11,6 +12,7 @@ class Parameters:
                 num_epochs,
                 num_fine_tuning_epochs,
                 random_state):
+        self.dataset_name_list = dataset_name_list
         self.lm_model_name = lm_model_name
         self.max_length = max_length
         self.batch_size_train = batch_size_train
