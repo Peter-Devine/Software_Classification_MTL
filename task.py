@@ -1,6 +1,7 @@
 from df_to_pytorch_dataset import get_dataset_from_df, get_multiclass_dataset_from_df
 from models import get_cls_model_and_optimizer
-import torch
+from torch import nn
+from math import ceil
 
 class Task:
     def __init__(self, data_getter_fn, is_multilabel):
@@ -12,14 +13,18 @@ class Task:
         self.dataset = self.data_getter_fn()
         train, valid, test = self.dataset
 
+        # Get the number of training batches in this dataset so that we know how to shuffle this data with respect to others later on
+        # E.g. if dataset A has 10 batches and dataset B has 100 batches, we want to train our model on dataset B 10 times more frequently as dataset A
+        self.train_length = ceil(train.shape[0] / PARAMS.batch_size_train)
+
         # Convert these dataframes into tensor datasets, with inputs (token ids) and labels (integers for multi-class, one-hot vectors for multi-label), as well as the mappings of these values to real labels
         self.train_data, self.valid_data, self.test_data, self.code_map = self.get_tensor_dataset(train, valid, test, PARAMS)
 
         # Find the number of classes in the dataset
-        n_classes = len(code_map.keys())
+        self.n_classes = len(code_map.keys())
 
         # Create a model using the shared language model layer and initialize an optimizer to use with this model
-        self.model, self.optimizer = get_cls_model_and_optimizer(language_model, n_classes, PARAMS)
+        self.model, self.optimizer = get_cls_model_and_optimizer(language_model, self.n_classes, PARAMS)
 
         # Get the loss function that is appropriate for this task
         self.loss_fn = self.get_loss_function()
@@ -37,6 +42,6 @@ class Task:
 
     def get_loss_function(self):
         if self.is_multilabel:
-            return torch.nn.BCEWithLogitsLoss()
+            return nn.BCEWithLogitsLoss
         else:
-            return torch.nn.CrossEntropyLoss()
+            return nn.CrossEntropyLoss
