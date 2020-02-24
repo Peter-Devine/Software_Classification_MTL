@@ -24,6 +24,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     step_num = 0
     run_type_log_prefix = "Fine-tuning " if is_fine_tuning else "Multi-task training "
 
+    epochs = PARAMS.num_fine_tuning_epochs if is_fine_tuning else PARAMS.num_epochs
+
     for epoch in range(epochs):
         # TRAIN
         for task_name in task_training_list:
