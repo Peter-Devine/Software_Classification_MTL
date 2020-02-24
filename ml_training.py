@@ -60,7 +60,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
             comparison_metric = validation_results["accuracy"]
 
             if comparison_metric > max(task_eval_metrics[task_name]):
-                model_saver.save_model(file_name=task_name, task.model)
+                model_saver.save_model(file_name=task_name, model=task.model)
 
             task_eval_metrics[task_name].append(comparison_metric)
 

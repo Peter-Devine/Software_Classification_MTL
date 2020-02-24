@@ -7,7 +7,7 @@ class TaskBuilder:
     def __init__(self, random_state):
         self.random_state = random_state
         self.task_dict = {
-            "maalej_2015": Task(data_getter_fn=get_maalej_2015, is_multilabel=False, random_state=random_state)
+            "maalej_2015": Task(data_getter_fn=self.get_maalej_2015, is_multilabel=False)
         }
 
     def build_tasks(self, names_of_datasets, PARAMS):
@@ -38,7 +38,7 @@ class TaskBuilder:
 
         train_val_idx = df.sample(frac=0.7, random_state=self.random_state).index
         test_idx = df.drop(train_val_idx).index
-        train_idx = df[train_val_idx].sample(frac=0.85, random_state=self.random_state).index
-        valid_idx = df[train_val_idx].drop(train_idx).index
+        train_idx = df.loc[train_val_idx].sample(frac=0.85, random_state=self.random_state).index
+        valid_idx = df.loc[train_val_idx].drop(train_idx).index
 
         return df[train_idx], df[valid_idx], df[test_idx]
