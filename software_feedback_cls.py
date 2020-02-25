@@ -10,8 +10,8 @@ parser.add_argument('--dataset_list', required=True, type=str, help='Comma separ
 parser.add_argument('--model_name', default="bert-base-uncased", type=str, help='Name of the language model to use (See https://huggingface.co/transformers/pretrained_models.html for all possible models)')
 parser.add_argument('--max_length', default=128, type=int, help='Maximum sequence length for input')
 parser.add_argument('--num_epochs', default=20, type=int, help='Number of epochs to train the model for')
-parser.add_argument('--batch_size_train', default=20, type=int, help='Number of epochs to train the model for')
-parser.add_argument('--batch_size_eval', default=20, type=int, help='Number of epochs to train the model for')
+parser.add_argument('--batch_size_train', default=64, type=int, help='Number of epochs to train the model for')
+parser.add_argument('--batch_size_eval', default=32, type=int, help='Number of epochs to train the model for')
 parser.add_argument('--num_fine_tuning_epochs', default=20, type=int, help='Number of epochs to fine tune the model for')
 parser.add_argument('--early_stopping_patience', default=999, type=int, help='How many epochs to wait before stopping training after validation performance peak')
 parser.add_argument('--LR', default=5e-5, type=int, help='Learning rate for the model')
@@ -47,15 +47,16 @@ task_dict = task_builder.build_tasks(dataset_list, PARAMS)
 #Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:
     task_eval_metrics, task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=False)
+    # Output final results to disk
+    with open("./task_eval_metrics.txt","w") as f:
+        f.write( str(task_eval_metrics) )
+    with open("./task_test_metrics.txt","w") as f:
+        f.write( str(task_test_metrics) )
 
 # Fine tune on each task individually
 ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
 
 # Output final results to disk
-with open("./task_eval_metrics.txt","w") as f:
-    f.write( str(task_eval_metrics) )
-with open("./task_test_metrics.txt","w") as f:
-    f.write( str(task_test_metrics) )
 with open("./ft_task_eval_metrics.txt","w") as f:
     f.write( str(ft_task_eval_metrics) )
 with open("./ft_task_test_metrics.txt","w") as f:
