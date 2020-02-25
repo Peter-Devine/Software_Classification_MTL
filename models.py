@@ -20,7 +20,8 @@ def get_cls_model_and_optimizer(language_model, n_classes, PARAMS):
           return x
 
     cls_lm = ClassificationLanguageModel(language_model, n_classes)
-    cls_lm.cuda()
+    # cls_lm.cuda()
+    cls_lm.cpu()
 
     no_decay = ["bias", "LayerNorm.weight"]
 
