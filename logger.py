@@ -28,12 +28,17 @@ class NeptuneLogger:
                 self.log_array(inner_metric_name, x, cell)
 
     def log_text(self, metric_name, x, text):
-        neptune.log_text(metric_name, x, y)
+        neptune.log_text(metric_name, x, text)
+
+    def log_label_map(self, label_map, task_name):
+        neptune.log_text(f"{task_name} label map", str(label_map))
 
     def log_results(self, task_name, split_type, epoch, results_dict):
-        metric_prefix = f"Task: {task_name} Split: {split_type} "
+        metric_prefix = f"{task_name} {split_type} "
         for metric_name, metric in results_dict.items():
-            if self.is_numeric(metric):
+            if metric_name=="confusion_matrix":
+                self.log_text(metric_prefix + metric_name, epoch, str(metric))
+            elif self.is_numeric(metric):
                 self.log_metric(metric_prefix + metric_name, epoch, metric)
             else:
                 self.log_array(metric_prefix + metric_name, epoch, metric)
