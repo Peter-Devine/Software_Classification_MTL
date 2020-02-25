@@ -22,10 +22,10 @@ class NeptuneLogger:
     def log_array(self, metric_name, x, array):
         for i, cell in enumerate(array):
             inner_metric_name = f"{metric_name}__{str(i)}"
-            if is_numeric(cell):
+            if self.is_numeric(cell):
                 neptune.log_metric(inner_metric_name, x, cell)
             else:
-                log_array(inner_metric_name, x, cell)
+                self.log_array(inner_metric_name, x, cell)
 
     def log_text(self, metric_name, x, text):
         neptune.log_text(metric_name, x, y)
@@ -33,7 +33,7 @@ class NeptuneLogger:
     def log_results(self, task_name, split_type, epoch, results_dict):
         metric_prefix = f"Task: {task_name} Split: {split_type} "
         for metric_name, metric in results_dict.items():
-            if is_numeric(metric):
+            if self.is_numeric(metric):
                 self.log_metric(metric_prefix + metric_name, epoch, metric)
             else:
                 self.log_array(metric_prefix + metric_name, epoch, metric)
