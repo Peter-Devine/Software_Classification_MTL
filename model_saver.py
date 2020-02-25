@@ -6,8 +6,11 @@ class ModelSaver:
         self.model_dir = model_dir
         self.get_full_model_file_name = lambda x: f"best_model_{x}.pt"
 
-    def save_model(self, file_name, model):
-        torch.save(model, os.path.join(self.model_dir, self.get_full_model_file_name(file_name)))
+        if not os.path.exists(self.model_dir):
+            os.makedirs(self.model_dir)
 
-    def load_model(self, file_name):
-        return torch.load(os.path.join(self.model_dir, self.get_full_model_file_name(file_name)))
+    def save_model(self, file_name, model):
+        torch.save(model.state_dict(), os.path.join(self.model_dir, self.get_full_model_file_name(file_name)))
+
+    def load_model(self, file_name, model):
+        model.load_state_dict(torch.load(os.path.join(self.model_dir, self.get_full_model_file_name(file_name))))

@@ -3,9 +3,7 @@ from evaluation_engines import create_eval_engine
 from model_saver import ModelSaver
 
 def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
-    model_saver = ModelSaver(".")
-
-    metrics = []
+    model_saver = ModelSaver(model_dir="./models")
 
     task_eval_metrics = {task_name: [0] for task_name, task in task_dict.items()}
     task_steps = {task_name: 0 for task_name, task in task_dict.items()}
@@ -69,9 +67,9 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     # TEST
     task_test_metrics = {task_name: None for task_name, task in task_dict.items()}
     for task_name, task in task_dict.items():
-        task.model = model_saver.load_model(file_name=task_name)
+        model_saver.load_model(file_name=task_name, model=task.model)
 
-        test_engine = create_eval_engine(model=best_model, is_multilabel=task.is_multilabel, n_classes=task.n_classes)
+        test_engine = create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes)
         test_results = test_engine.run(task.test_data).metrics
 
         task_test_metrics[task_name] = test_results
