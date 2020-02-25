@@ -24,7 +24,7 @@ def create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_tes
     def create_dataset(X, y, batch_size):
       X_tensor = torch.LongTensor(np.stack(X.values))
       y_tensor = torch.LongTensor(np.stack(y.values))
-      return iter(DataLoader(TensorDataset(X_tensor, y_tensor), batch_size=batch_size, shuffle=True))
+      return DataLoader(TensorDataset(X_tensor, y_tensor), batch_size=batch_size, shuffle=True)
 
     train_data = create_dataset(X_train, y_train, batch_size=PARAMS.batch_size_train)
     valid_data = create_dataset(X_valid, y_valid, batch_size=PARAMS.batch_size_eval)

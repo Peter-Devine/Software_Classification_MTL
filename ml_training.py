@@ -20,18 +20,23 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
         random.shuffle(task_training_list)
 
     step_num = 0
-    run_type_log_prefix = "Fine-tuning " if is_fine_tuning else "Multi-task training "
+    run_type_log_prefix = "FT " if is_fine_tuning else "MTL " # Specify in the logs whether a given result is from fine tuning or multi-task training
 
     epochs = PARAMS.num_fine_tuning_epochs if is_fine_tuning else PARAMS.num_epochs
 
     for epoch in range(epochs):
+
+        # Reset iterable for each task
+        for task_name, task in task_dict.items():
+            task.training_iterable = iter(task.train_data)
+
         # TRAIN
         for task_name in task_training_list:
             task = task_dict[task_name]
 
             loss_fn = task.loss_fn
 
-            X, y  = next(task.train_data)
+            X, y  = next(task.training_iterable)
 
             # logits = task.model(X.cuda())
             logits = task.model(X.cpu())

@@ -10,18 +10,20 @@ class Task:
 
     def build_task(self, language_model, PARAMS):
         # Download the dataset into a split of train, validation and test Pandas dataframes
-        self.dataset = self.data_getter_fn()
-        train, valid, test = self.dataset
+        train, valid, test = self.data_getter_fn()
 
         # Get the number of training batches in this dataset so that we know how to shuffle this data with respect to others later on
         # E.g. if dataset A has 10 batches and dataset B has 100 batches, we want to train our model on dataset B 10 times more frequently as dataset A
         self.train_length = ceil(train.shape[0] / PARAMS.batch_size_train)
 
         # Convert these dataframes into tensor datasets, with inputs (token ids) and labels (integers for multi-class, one-hot vectors for multi-label), as well as the mappings of these values to real labels
-        self.train_data, self.valid_data, self.test_data, self.code_map = self.get_tensor_dataset(train, valid, test, PARAMS)
+        self.train_data, self.valid_data, self.test_data, self.label_map = self.get_tensor_dataset(train, valid, test, PARAMS)
+
+        # Make a training_iterable variable whereupon the dataset can be iterated over, not necessarily in a loop. This is needed for multi-task learning where batches of different tasks will generally be mixed.
+        self.training_iterable = iter(self.train_data)
 
         # Find the number of classes in the dataset
-        self.n_classes = len(self.code_map.keys())
+        self.n_classes = len(self.label_map.keys())
 
         # Create a model using the shared language model layer and initialize an optimizer to use with this model
         self.model, self.optimizer = get_cls_model_and_optimizer(language_model, self.n_classes, PARAMS)

@@ -7,7 +7,8 @@ class TaskBuilder:
     def __init__(self, random_state):
         self.random_state = random_state
         self.task_dict = {
-            "maalej_2015": Task(data_getter_fn=self.get_maalej_2015, is_multilabel=False)
+            "maalej_2015": Task(data_getter_fn=self.get_maalej_2015, is_multilabel=False),
+            "maalej_2015_bug_bin": Task(data_getter_fn=self.get_maalej_2015_bug_bin, is_multilabel=False)
         }
 
     def build_tasks(self, names_of_datasets, PARAMS):
@@ -34,11 +35,20 @@ class TaskBuilder:
         with open(json_path) as json_file:
             data = json.load(json_file)
 
-        df = pd.DataFrame({"text": ["Title: " + x["title"] + " Comment: " + x["comment"] if x["title"] is not None else "Comment: " + x["comment"] for x in data], "label":[x["label"] for x in data]})
-
+        df = pd.DataFrame({"text": ["Title: " + x["title"] + " Comment: " + x["comment"] if x["title"] is not None else "Comment: " + x["comment"] for x in data], "label":[x["label"] for x in data]}).sample(n=300, random_state=self.random_state)
+        print(df.label.unique())
         train_val_idx = df.sample(frac=0.7, random_state=self.random_state).index
         test_idx = df.drop(train_val_idx).index
         train_idx = df.loc[train_val_idx].sample(frac=0.85, random_state=self.random_state).index
         valid_idx = df.loc[train_val_idx].drop(train_idx).index
 
         return df.loc[train_idx], df.loc[valid_idx], df.loc[test_idx]
+
+    def get_maalej_2015_bug_bin(self):
+        train, dev, test = self.get_maalej_2015()
+
+        train["label"] = train.label.apply(lambda x: x if x=="Bug" else "NoBug")
+        dev["label"] = dev.label.apply(lambda x: x if x=="Bug" else "NoBug")
+        test["label"] = test.label.apply(lambda x: x if x=="Bug" else "NoBug")
+
+        return train, dev, test
