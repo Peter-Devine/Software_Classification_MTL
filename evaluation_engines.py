@@ -1,7 +1,7 @@
 from ignite.engine import Engine
 from ignite.metrics import Accuracy, Recall, Precision, ConfusionMatrix
 
-def create_eval_engine(model, is_multilabel):
+def create_eval_engine(model, is_multilabel, n_classes):
 
   def process_function(engine, batch):
       X, y = batch

@@ -4,7 +4,7 @@ import os
 class ModelSaver:
     def __init__(self, model_dir):
         self.model_dir = model_dir
-        self.get_full_model_file_name = lambda x: f"best_model_{x}.py"
+        self.get_full_model_file_name = lambda x: f"best_model_{x}.pt"
 
     def save_model(self, file_name, model):
         torch.save(model, os.path.join(self.model_dir, self.get_full_model_file_name(file_name)))

@@ -21,7 +21,7 @@ class Task:
         self.train_data, self.valid_data, self.test_data, self.code_map = self.get_tensor_dataset(train, valid, test, PARAMS)
 
         # Find the number of classes in the dataset
-        self.n_classes = len(code_map.keys())
+        self.n_classes = len(self.code_map.keys())
 
         # Create a model using the shared language model layer and initialize an optimizer to use with this model
         self.model, self.optimizer = get_cls_model_and_optimizer(language_model, self.n_classes, PARAMS)

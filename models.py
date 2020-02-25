@@ -1,4 +1,5 @@
 from transformers import AutoModel,  AdamW
+from torch import nn
 
 def get_language_model(model_name):
     return AutoModel.from_pretrained(model_name)
@@ -33,4 +34,4 @@ def get_cls_model_and_optimizer(language_model, n_classes, PARAMS):
 
     optimizer = AdamW(optimizer_grouped_parameters, lr=PARAMS.learning_rate, eps=PARAMS.epsilon)
 
-    return model, optimizer
+    return cls_lm, optimizer

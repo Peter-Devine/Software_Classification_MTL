@@ -34,11 +34,11 @@ class TaskBuilder:
         with open(json_path) as json_file:
             data = json.load(json_file)
 
-        df = pd.DataFrame({"text": [x["title"] + " [SEP] " + x["comment"] if x["title"] is not None else " [SEP] " + x["comment"] for x in data], "label":[x["label"] for x in data]})
+        df = pd.DataFrame({"text": ["Title: " + x["title"] + " Comment: " + x["comment"] if x["title"] is not None else "Comment: " + x["comment"] for x in data], "label":[x["label"] for x in data]})
 
         train_val_idx = df.sample(frac=0.7, random_state=self.random_state).index
         test_idx = df.drop(train_val_idx).index
         train_idx = df.loc[train_val_idx].sample(frac=0.85, random_state=self.random_state).index
         valid_idx = df.loc[train_val_idx].drop(train_idx).index
 
-        return df[train_idx], df[valid_idx], df[test_idx]
+        return df.loc[train_idx], df.loc[valid_idx], df.loc[test_idx]

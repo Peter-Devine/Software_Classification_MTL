@@ -12,7 +12,7 @@ parser.add_argument('--max_length', default=128, type=int, help='Maximum sequenc
 parser.add_argument('--num_epochs', default=20, type=int, help='Number of epochs to train the model for')
 parser.add_argument('--batch_size_train', default=20, type=int, help='Number of epochs to train the model for')
 parser.add_argument('--batch_size_eval', default=20, type=int, help='Number of epochs to train the model for')
-parser.add_argument('--num_fine_tuning_epochs', default=0, type=int, help='Number of epochs to fine tune the model for')
+parser.add_argument('--num_fine_tuning_epochs', default=20, type=int, help='Number of epochs to fine tune the model for')
 parser.add_argument('--early_stopping_patience', default=999, type=int, help='How many epochs to wait before stopping training after validation performance peak')
 parser.add_argument('--LR', default=5e-5, type=int, help='Learning rate for the model')
 parser.add_argument('--EPS', default=1e-6, type=int, help='Epsilon of the model')

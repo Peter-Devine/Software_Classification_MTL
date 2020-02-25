@@ -9,7 +9,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
     task_eval_metrics = {task_name: [0] for task_name, task in task_dict.items()}
     task_steps = {task_name: 0 for task_name, task in task_dict.items()}
-    task_eval_engines = {task_name: create_eval_engine(model=task.model, is_multilabel=task.is_multilabel) for task_name, task in task_dict.items()}
+    task_eval_engines = {task_name: create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes) for task_name, task in task_dict.items()}
 
     task_training_list = []
     for task_name, task in task_dict.items():
@@ -69,7 +69,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     for task_name, task in task_dict.items():
         task.model = model_saver.load_model(file_name=task_name)
 
-        test_engine = create_eval_engine(model=best_model, is_multilabel=task.is_multilabel)
+        test_engine = create_eval_engine(model=best_model, is_multilabel=task.is_multilabel, n_classes=task.n_classes)
         test_results = test_engine.run(task.test_data).metrics
 
         task_test_metrics[task_name] = test_results
