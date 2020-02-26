@@ -45,7 +45,7 @@ task_builder = TaskBuilder(random_state=PARAMS.random_state)
 task_dict = task_builder.build_tasks(dataset_list, PARAMS)
 
 for task_name, task in task_dict.items():
-    logger.log_label_map(task_name, task.code_map)
+    logger.log_label_map(task_name, task.label_map)
 
 #Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:
