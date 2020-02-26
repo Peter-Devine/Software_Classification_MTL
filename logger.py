@@ -6,7 +6,7 @@ class NeptuneLogger:
         neptune.init(username + '/sandbox')
 
     def create_experiment(self, PARAMS):
-        neptune.create_experiment(name="___".join(PARAMS.dataset_name_list),
+        neptune.create_experiment(name="__|__".join(PARAMS.dataset_name_list),
                           params=vars(PARAMS))
 
     def log_metric(self, metric_name, x, y):
