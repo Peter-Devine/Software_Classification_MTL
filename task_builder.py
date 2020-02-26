@@ -9,7 +9,8 @@ class TaskBuilder:
         self.task_dict = {
             "maalej_2015": Task(data_getter_fn=self.get_maalej_2015, is_multilabel=False),
             "maalej_2015_bug_bin": Task(data_getter_fn=self.get_maalej_2015_bug_bin, is_multilabel=False),
-            "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False)
+            "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False),
+            "ciurumelea_2017": Task(data_getter_fn=self.get_ciurumelea_2017, is_multilabel=True)
         }
         self.data_path = "./data"
 
@@ -23,14 +24,15 @@ class TaskBuilder:
     ######### INDIVIDUAL DATA GETTERS ############
 
     def get_maalej_2015(self):
+        task_data_path = os.path.join(self.data_path, "maalej_2015")
         # from https://mast.informatik.uni-hamburg.de/wp-content/uploads/2015/06/review_classification_preprint.pdf
         # Bug Report, Feature Request, or Simply Praise? On Automatically Classifying App Reviews
-        if not os.path.exists(os.path.join(self.data_path, "REJ_data.zip")):
+        if not os.path.exists(os.path.join(task_data_path, "REJ_data.zip")):
             r = requests.get("https://mast.informatik.uni-hamburg.de/wp-content/uploads/2014/03/REJ_data.zip")
             z = zipfile.ZipFile(io.BytesIO(r.content))
-            z.extractall(path = self.data_path)
+            z.extractall(path = task_data_path)
 
-        json_path = os.path.join(self.data_path, "REJ_data", "all.json")
+        json_path = os.path.join(task_data_path, "REJ_data", "all.json")
 
         with open(json_path) as json_file:
             data = json.load(json_file)
@@ -58,12 +60,13 @@ class TaskBuilder:
         return train, dev, test
 
     def get_chen_2014_swiftkey(self):
+        task_data_path = os.path.join(self.data_path, "chen_2014")
         # from https://ink.library.smu.edu.sg/cgi/viewcontent.cgi?article=3323&context=sis_research
         # AR-Miner: Mining Informative Reviews for Developers from Mobile App Marketplace
-        if not os.path.exists(os.path.join(self.data_path, "datasets.zip")):
+        if not os.path.exists(os.path.join(task_data_path, "datasets.zip")):
             r = requests.get("https://sites.google.com/site/appsuserreviews/home/datasets.zip?attredirects=0&d=1")
             z = zipfile.ZipFile(io.BytesIO(r.content))
-            z.extractall(path=self.data_path)
+            z.extractall(path=task_data_path)
 
         def df_getter(data_path, label):
             with open(data_path, "r") as f:
@@ -71,11 +74,11 @@ class TaskBuilder:
             return pd.DataFrame({"text": [" ".join(x.split()[2:]) for x in data.split("\n") if len(x) > 0],
                           "label": label})
 
-        train_info = df_getter(os.path.join(self.data_path, "datasets", "swiftkey", "trainL", "info.txt"), "informative")
-        train_noninfo = df_getter(os.path.join(self.data_path, "datasets", "swiftkey", "trainL", "non-info.txt"), "non-informative")
+        train_info = df_getter(os.path.join(task_data_path, "datasets", "swiftkey", "trainL", "info.txt"), "informative")
+        train_noninfo = df_getter(os.path.join(task_data_path, "datasets", "swiftkey", "trainL", "non-info.txt"), "non-informative")
 
-        test_info = df_getter(os.path.join(self.data_path, "datasets", "swiftkey", "test", "info.txt"), "informative")
-        test_noninfo = df_getter(os.path.join(self.data_path, "datasets", "swiftkey", "test", "non-info.txt"), "non-informative")
+        test_info = df_getter(os.path.join(task_data_path, "datasets", "swiftkey", "test", "info.txt"), "informative")
+        test_noninfo = df_getter(os.path.join(task_data_path, "datasets", "swiftkey", "test", "non-info.txt"), "non-informative")
 
         train_and_val = train_info.append(train_noninfo)
 
@@ -84,3 +87,24 @@ class TaskBuilder:
         test = test_info.append(test_noninfo)
 
         return train, val, test
+
+    def get_ciurumelea_2017(self):
+        task_data_path = os.path.join(self.data_path, "ciurumelea_2017")
+        # from https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7884612&tag=1
+        # Analyzing Reviews and Code of Mobile Apps for Better Release Planning
+        if not os.path.exists(os.path.join(task_data_path, "UserReviewReference-Replication-Package-URR-v1.0.zip")):
+            r = requests.get("https://zenodo.org/record/161842/files/panichella/UserReviewReference-Replication-Package-URR-v1.0.zip?download=1")
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            z.extractall(path=task_data_path)
+
+        review_data_path = os.path.join(task_data_path, "panichella-UserReviewReference-Replication-Package-643afe0", "data", "reviews", "golden_set.csv")
+
+        df = pd.read_csv(review_data_path, encoding="iso-8859-1")
+
+        label_columns = ["classification", "class1", "class2", "class3", "class4", "class5"]
+
+        unique_values = set()
+        for column in label_columns:
+            unique_values.update(df[column].unique())
+
+        raise NotImplemented("You haven't finished this one yet!")
