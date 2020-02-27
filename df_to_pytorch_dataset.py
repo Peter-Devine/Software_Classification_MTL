@@ -20,10 +20,13 @@ def get_ids_for_splits(train_df, valid_df, test_df, PARAMS):
     return X_train, X_valid, X_test
 
 # Takes in series representations of X and y for each split and creates a pre-batched dataset for each split
-def create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS):
+def create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS, is_multilabel):
     def create_dataset(X, y, batch_size):
       X_tensor = torch.LongTensor(np.stack(X.values))
-      y_tensor = torch.LongTensor(np.stack(y.values))
+      if is_multilabel:
+          y_tensor = torch.FloatTensor(np.stack(y.values))
+      else:
+          y_tensor = torch.LongTensor(np.stack(y.values))
       return DataLoader(TensorDataset(X_tensor, y_tensor), batch_size=batch_size, shuffle=True)
 
     train_data = create_dataset(X_train, y_train, batch_size=PARAMS.batch_size_train)
@@ -53,7 +56,7 @@ def get_multiclass_dataset_from_df(train_df, valid_df, test_df, PARAMS):
     y_valid = apply_label_list(valid_df, code_map)
     y_test = apply_label_list(test_df, code_map)
 
-    train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS)
+    train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS, is_multilabel=False)
 
     return train_data, valid_data, test_data, code_map
 
@@ -69,15 +72,15 @@ def get_multilabel_dataset_from_df(train_df, valid_df, test_df, PARAMS):
 
       code_map = {v:k for k, v in inv_code_map.items()}
 
-      return pd.Series(df[label_columns]), code_map
+      return df[label_columns], code_map
 
     def apply_label_list(df, code_map):
-      return pd.Series(df[code_map.keys()])
+      return df[code_map.keys()]
 
     y_train, code_map = get_label_list(train_df)
     y_valid = apply_label_list(valid_df, code_map)
     y_test = apply_label_list(test_df, code_map)
 
-    train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS)
+    train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS, is_multilabel=True)
 
     return train_data, valid_data, test_data, code_map
