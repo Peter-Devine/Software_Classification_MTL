@@ -116,8 +116,9 @@ class TaskBuilder:
             }
 
             for coarse_column, fine_mappings in coarse_to_fine_dict.items():
-                df[f"label_{coarse_column}"] = df[f"label_{coarse_column}"] | df[[f"label_{x}" for x in fine_mappings]].any(axis=1)
-                df = df.drop(fine_mappings, axis=1)
+                fine_mappings_column_names = [f"label_{x}" for x in fine_mappings]
+                df[f"label_{coarse_column}"] = df[f"label_{coarse_column}"] | df[fine_mappings_column_names].any(axis=1)
+                df = df.drop(fine_mappings_column_names, axis=1)
 
             return df
 

@@ -38,23 +38,31 @@ class TopK(Metric):
 
 def create_eval_engine(model, is_multilabel, n_classes):
 
+  if is_multilabel:
+      sigmoid_fn = torch.nn.Sigmoid()
+
   def process_function(engine, batch):
       X, y = batch
       # pred = model(X.cuda())
       # gold = y.cuda()
       pred = model(X.cpu())
+      if is_multilabel:
+          pred = sigmoid_fn(pred)
+          pred = pred.round()
       gold = y.cpu()
       return pred, gold
 
   eval_engine = Engine(process_function)
-  accuracy = Accuracy(is_multilabel=is_multilabel)
+  accuracy = Accuracy()
   accuracy.attach(eval_engine, "accuracy")
-  recall = Recall(is_multilabel=is_multilabel)
+  recall = Recall()
   recall.attach(eval_engine, "recall")
-  precision = Precision(is_multilabel=is_multilabel)
+  precision = Precision()
   precision.attach(eval_engine, "precision")
-  top_k = TopK(k=10, label_idx_of_interest=0)
-  top_k.attach(eval_engine, "top_k")
+
+  if not is_multilabel and n_classes==2:
+      top_k = TopK(k=10, label_idx_of_interest=0)
+      top_k.attach(eval_engine, "top_k")
 
   if not is_multilabel:
       confusion_matrix = ConfusionMatrix(num_classes=n_classes)

@@ -36,12 +36,10 @@ class NeptuneLogger:
     def log_results(self, task_name, split_type, epoch, results_dict):
         metric_prefix = f"{task_name} {split_type} "
         for metric_name, metric in results_dict.items():
-            if metric_name=="confusion_matrix":
-                self.log_text(metric_prefix + metric_name, epoch, str(metric))
-            elif self.is_numeric(metric):
+            if self.is_numeric(metric):
                 self.log_metric(metric_prefix + metric_name, epoch, metric)
             else:
-                self.log_array(metric_prefix + metric_name, epoch, metric)
+                self.log_text(metric_prefix + metric_name, epoch, str(metric))
 
     def stop(self):
         neptune.stop()
