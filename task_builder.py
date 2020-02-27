@@ -10,7 +10,8 @@ class TaskBuilder:
             "maalej_2015": Task(data_getter_fn=self.get_maalej_2015, is_multilabel=False),
             "maalej_2015_bug_bin": Task(data_getter_fn=self.get_maalej_2015_bug_bin, is_multilabel=False),
             "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False),
-            "ciurumelea_2017": Task(data_getter_fn=self.get_ciurumelea_2017, is_multilabel=True)
+            "ciurumelea_2017_fine": Task(data_getter_fn=self.get_ciurumelea_2017_fine, is_multilabel=True),
+            "ciurumelea_2017_coarse": Task(data_getter_fn=self.get_ciurumelea_2017_coarse, is_multilabel=True)
         }
         self.data_path = "./data"
 
@@ -88,6 +89,44 @@ class TaskBuilder:
 
         return train, val, test
 
+    def get_ciurumelea_2017_fine(self):
+        train, val, test = self.get_ciurumelea_2017()
+
+        def remove_coarse_labels(df):
+            coarse_columns = ["COMPATIBILITY", "USAGE", "PRICING", "PROTECTION", "RESSOURCES", "OTHER"]
+            return df.drop([f"label_{x}" for x in coarse_columns], axis=1)
+
+        train = remove_coarse_labels(train)
+        val = remove_coarse_labels(val)
+        test = remove_coarse_labels(test)
+
+        return train, val, test
+
+    def get_ciurumelea_2017_coarse(self):
+        train, val, test = self.get_ciurumelea_2017()
+
+        def combine_fine_labels_to_coarse(df):
+            coarse_to_fine_dict = {
+                "COMPATIBILITY": ['DEVICE', 'ANDROID VERSION', 'HARDWARE'],
+                "USAGE": ['APP USABILITY', 'UI'],
+                "RESSOURCES": ['PERFORMANCE', 'BATTERY', 'MEMORY'],
+                "PRICING": ['LICENSING', 'PRICE'],
+                "PROTECTION": ['SECURITY', 'PRIVACY'],
+                "OTHER": ['ERROR']
+            }
+
+            for coarse_column, fine_mappings in coarse_to_fine_dict.items():
+                df[f"label_{coarse_column}"] = df[f"label_{coarse_column}"] | df[[f"label_{x}" for x in fine_mappings]].any(axis=1)
+                df = df.drop(fine_mappings, axis=1)
+
+            return df
+
+        train = combine_fine_labels_to_coarse(train)
+        val = combine_fine_labels_to_coarse(val)
+        test = combine_fine_labels_to_coarse(test)
+
+        return train, val, test
+
     def get_ciurumelea_2017(self):
         task_data_path = os.path.join(self.data_path, "ciurumelea_2017")
         # from https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7884612&tag=1
@@ -100,6 +139,7 @@ class TaskBuilder:
         review_data_path = os.path.join(task_data_path, "panichella-UserReviewReference-Replication-Package-643afe0", "data", "reviews", "golden_set.csv")
 
         df = pd.read_csv(review_data_path, encoding="iso-8859-1")
+        df["text"] = df.reviewText
 
         label_columns = ["classification", "class1", "class2", "class3", "class4", "class5"]
 
@@ -107,4 +147,22 @@ class TaskBuilder:
         for column in label_columns:
             unique_values.update(df[column].unique())
 
-        raise NotImplemented("You haven't finished this one yet!")
+        print(unique_values)
+
+        for unique_value in unique_values:
+            if type(unique_value) == str and unique_value != "COMPATIBILTY":
+                df[f"label_{unique_value}"] = (df[label_columns] == unique_value).any(axis=1)
+
+        # There is a spellling mistake in the dataframe where COMPATIBILITY is mistakenly labelled COMPATIBILTY, but only for some reviews. We fix this here.
+        # We choose to ignore the spelling mistake of labelling RESOURCES as RESSOURCES, and just continue with that typo throughout the experiment.
+        df[f"label_COMPATIBILITY"] = df[f"label_COMPATIBILITY"] | (df[label_columns] == "COMPATIBILTY").any(axis=1)
+
+        columns_to_include = ["text"] + [x for x in df.columns if "label_" in x]
+        df = df[columns_to_include]
+
+        train_and_val = df.sample(frac=0.8, random_state=self.random_state)
+        train = train_and_val.sample(frac=0.7, random_state=self.random_state)
+        val = train_and_val.drop(train.index)
+        test = df.drop(train_and_val.index)
+
+        return train, val, test
