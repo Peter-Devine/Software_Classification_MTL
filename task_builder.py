@@ -40,8 +40,7 @@ class TaskBuilder:
 
         df = pd.DataFrame({"text": [
             "Title: " + x["title"] + " Comment: " + x["comment"] if x["title"] is not None else "Comment: " + x[
-                "comment"] for x in data], "label": [x["label"] for x in data]}).sample(n=100,
-                                                                                        random_state=self.random_state)
+                "comment"] for x in data], "label": [x["label"] for x in data]})
 
         train_val_idx = df.sample(frac=0.7, random_state=self.random_state).index
         test_idx = df.drop(train_val_idx).index
@@ -132,10 +131,11 @@ class TaskBuilder:
         task_data_path = os.path.join(self.data_path, "ciurumelea_2017")
         # from https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7884612&tag=1
         # Analyzing Reviews and Code of Mobile Apps for Better Release Planning
-        if not os.path.exists(os.path.join(task_data_path, "UserReviewReference-Replication-Package-URR-v1.0.zip")):
+        zip_file_path = os.path.join(task_data_path, "UserReviewReference-Replication-Package-URR-v1.0.zip")
+        if not os.path.exists(zip_file_path):
             r = requests.get("https://zenodo.org/record/161842/files/panichella/UserReviewReference-Replication-Package-URR-v1.0.zip?download=1")
             z = zipfile.ZipFile(io.BytesIO(r.content))
-            z.extractall(path=task_data_path)
+            z.extractall(path=zip_file_path)
 
         review_data_path = os.path.join(task_data_path, "panichella-UserReviewReference-Replication-Package-643afe0", "data", "reviews", "golden_set.csv")
 

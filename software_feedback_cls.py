@@ -6,7 +6,7 @@ from ml_training import train_on_tasks
 from logger import NeptuneLogger
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset_list', required=True, type=str, help='Comma separated list of datasets (E.g. "maalej_2015,chen_2014"). No spaces between datasets.')
+parser.add_argument('--dataset_list', required=True, type=str, help='Comma separated list of datasets (E.g. "maalej_2015,chen_2014_swiftkey,ciurumelea_2017_fine"). No spaces between datasets.')
 parser.add_argument('--model_name', default="bert-base-uncased", type=str, help='Name of the language model to use (See https://huggingface.co/transformers/pretrained_models.html for all possible models)')
 parser.add_argument('--max_length', default=128, type=int, help='Maximum sequence length for input')
 parser.add_argument('--num_epochs', default=20, type=int, help='Number of epochs to train the model for')
