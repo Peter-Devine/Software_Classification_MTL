@@ -1,6 +1,5 @@
 import argparse
 from task_builder import TaskBuilder
-#from baselines import get_NB_baseline_eval_metrics
 from parameters import Parameters
 from ml_training import train_on_tasks
 from logger import NeptuneLogger
