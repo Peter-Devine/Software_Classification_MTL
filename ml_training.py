@@ -37,13 +37,13 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
             X, y  = next(task.training_iterable)
 
             # logits = task.model(X.cuda())
-            logits = task.model(X.cpu())
+            logits = task.model(X.cuda())
             loss_fn = task.loss_fn()
             # loss = loss_fn(logits.view(-1, task.n_classes), y.cuda().view(-1))
             if task.is_multilabel:
-                loss = loss_fn(logits.view(-1, task.n_classes), y.cpu())
+                loss = loss_fn(logits.view(-1, task.n_classes), y.cuda())
             else:
-                loss = loss_fn(logits.view(-1, task.n_classes), y.cpu().view(-1))
+                loss = loss_fn(logits.view(-1, task.n_classes), y.cuda().view(-1))
             loss.backward()
             task.optimizer.step()
             task.model.zero_grad()

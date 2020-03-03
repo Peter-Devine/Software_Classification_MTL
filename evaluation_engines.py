@@ -124,8 +124,8 @@ def create_eval_engine(model, is_multilabel, n_classes):
       X, y = batch
       # pred = model(X.cuda())
       # gold = y.cuda()
-      pred = model(X.cpu())
-      gold = y.cpu()
+      pred = model(X.cuda())
+      gold = y.cuda()
       return pred, gold
 
   eval_engine = Engine(process_function)
