@@ -5,10 +5,13 @@ from model_saver import ModelSaver
 def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     model_saver = ModelSaver(model_dir="./models")
 
+    # Get the per task eval metric against which best models are chosen
     task_eval_metrics = {task_name: [0] for task_name, task in task_dict.items()}
-    task_steps = {task_name: 0 for task_name, task in task_dict.items()}
+
+    # Evaluation engine for each task
     task_eval_engines = {task_name: create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes, cpu=PARAMS.cpu) for task_name, task in task_dict.items()}
 
+    # Get a list of task names to determine order of training, with one entry for each batch of that task (e.g. [Maalej2015, Maalej2015, Maalej2015] for Maalej2015 if it had 3 batches)
     task_training_list = []
     for task_name, task in task_dict.items():
         task_training_list.extend([task_name]*task.train_length)
@@ -19,9 +22,17 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
         # Shuffle task list during multi-task training so that tasks are trained roughly evenly throughout
         random.shuffle(task_training_list)
 
+    # initialize global step number
     step_num = 0
-    run_type_log_prefix = "FT " if is_fine_tuning else "MTL " # Specify in the logs whether a given result is from fine tuning or multi-task training
+    # Record the number of steps taken for each task in a dict
+    task_steps = {task_name: 0 for task_name, task in task_dict.items()}
+    # Record the number of epochs since the best performance of the model
+    epochs_since_last_best = {task_name: 0 for task_name, task in task_dict.items()}
 
+    # Specify in the logs whether a given result is from fine tuning or multi-task training
+    run_type_log_prefix = "FT " if is_fine_tuning else "MTL "
+
+    # Get the required number of epochs for training
     epochs = PARAMS.num_fine_tuning_epochs if is_fine_tuning else PARAMS.num_epochs
 
     for epoch in range(epochs):
@@ -32,6 +43,11 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
         # TRAIN
         for task_name in task_training_list:
+            # Skip training this task if training patience already exceeded (during fine tuning only).
+            # We do not skip on MTL training as there could be complex interactions between the training of multiple tasks.
+            if is_fine_tuning and epochs_since_last_best[task_name] > PARAMS.early_stopping_patience:
+                continue
+
             task = task_dict[task_name]
 
             X, y  = next(task.training_iterable)
@@ -73,7 +89,9 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
             if comparison_metric > max(task_eval_metrics[task_name]):
                 model_saver.save_model(file_name=task_name, model=task.model)
-
+                epochs_since_last_best[task_name] = 0
+            else:
+                epochs_since_last_best[task_name] += 1
             task_eval_metrics[task_name].append(comparison_metric)
 
     # TEST
