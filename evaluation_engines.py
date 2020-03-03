@@ -68,7 +68,6 @@ class MulticlassPrecision(MulticlassPrecisionRecall):
         super(MulticlassPrecision, self).__init__(output_transform=output_transform, label_idx_of_interest=label_idx_of_interest)
 
     def compute(self):
-        print("MulticlassPrecision")
         if (self.tp + self.fp) == 0:
             return np.nan
         else:
@@ -79,7 +78,6 @@ class MulticlassRecall(MulticlassPrecisionRecall):
         super(MulticlassRecall, self).__init__(output_transform=output_transform, label_idx_of_interest=label_idx_of_interest)
 
     def compute(self):
-        print("MulticlassRecall")
         print((self.tp + self.fn))
         if (self.tp + self.fn) == 0:
             return np.nan
@@ -91,7 +89,6 @@ class MulticlassSingleClassAccuracy(MulticlassPrecisionRecall):
         super(MulticlassSingleClassAccuracy, self).__init__(output_transform=output_transform, label_idx_of_interest=label_idx_of_interest)
 
     def compute(self):
-        print("MulticlassSingleClassAccuracy")
         if (self.tp + self.tn + self.fp + self.fn) == 0:
             return np.nan
         else:
@@ -116,7 +113,6 @@ class MulticlassAccuracy(Metric):
         self.all += int(y.shape[0] * y.shape[1])
 
     def compute(self):
-        print("MulticlassAccuracy")
         if self.all == 0:
             return np.nan
         else:
@@ -133,7 +129,6 @@ def create_eval_engine(model, is_multilabel, n_classes):
       return pred, gold
 
   eval_engine = Engine(process_function)
-
 
   if is_multilabel:
       accuracy = MulticlassAccuracy()
@@ -162,6 +157,5 @@ def create_eval_engine(model, is_multilabel, n_classes):
       if n_classes == 2:
           top_k = TopK(k=10, label_idx_of_interest=0)
           top_k.attach(eval_engine, "top_k")
-
 
   return eval_engine
