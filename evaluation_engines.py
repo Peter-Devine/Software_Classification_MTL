@@ -118,14 +118,19 @@ class MulticlassAccuracy(Metric):
         else:
             return self.correct / self.all
 
-def create_eval_engine(model, is_multilabel, n_classes):
+def create_eval_engine(model, is_multilabel, n_classes, cpu):
 
   def process_function(engine, batch):
       X, y = batch
       # pred = model(X.cuda())
       # gold = y.cuda()
-      pred = model(X.cuda())
-      gold = y.cuda()
+      if cpu:
+          pred = model(X.cpu())
+          gold = y.cpu()
+      else:
+          pred = model(X.cuda())
+          gold = y.cuda()
+
       return pred, gold
 
   eval_engine = Engine(process_function)

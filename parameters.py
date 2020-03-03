@@ -11,7 +11,8 @@ class Parameters:
                 early_stopping_patience,
                 num_epochs,
                 num_fine_tuning_epochs,
-                random_state):
+                random_state,
+                cpu):
         self.dataset_name_list = dataset_name_list
         self.lm_model_name = lm_model_name
         self.max_length = max_length
@@ -24,3 +25,4 @@ class Parameters:
         self.num_epochs = num_epochs
         self.num_fine_tuning_epochs = num_fine_tuning_epochs
         self.random_state = random_state
+        self.cpu = cpu

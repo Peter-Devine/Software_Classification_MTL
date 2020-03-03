@@ -7,7 +7,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
     task_eval_metrics = {task_name: [0] for task_name, task in task_dict.items()}
     task_steps = {task_name: 0 for task_name, task in task_dict.items()}
-    task_eval_engines = {task_name: create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes) for task_name, task in task_dict.items()}
+    task_eval_engines = {task_name: create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes, cpu=PARAMS.cpu) for task_name, task in task_dict.items()}
 
     task_training_list = []
     for task_name, task in task_dict.items():
@@ -36,14 +36,20 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
             X, y  = next(task.training_iterable)
 
-            # logits = task.model(X.cuda())
-            logits = task.model(X.cuda())
             loss_fn = task.loss_fn()
-            # loss = loss_fn(logits.view(-1, task.n_classes), y.cuda().view(-1))
-            if task.is_multilabel:
-                loss = loss_fn(logits.view(-1, task.n_classes), y.cuda())
+
+            if PARAMS.cpu:
+                logits = task.model(X.cpu())
+                golds = y.cpu()
             else:
-                loss = loss_fn(logits.view(-1, task.n_classes), y.cuda().view(-1))
+                logits = task.model(X.cuda())
+                golds = y.cuda()
+
+            if task.is_multilabel:
+                loss = loss_fn(logits.view(-1, task.n_classes), golds)
+            else:
+                loss = loss_fn(logits.view(-1, task.n_classes), golds.view(-1))
+
             loss.backward()
             task.optimizer.step()
             task.model.zero_grad()
@@ -75,7 +81,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     for task_name, task in task_dict.items():
         model_saver.load_model(file_name=task_name, model=task.model)
 
-        test_engine = create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes)
+        test_engine = create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes, cpu=PARAMS.cpu)
         test_results = test_engine.run(task.test_data).metrics
 
         task_test_metrics[task_name] = test_results

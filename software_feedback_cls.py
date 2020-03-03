@@ -18,6 +18,8 @@ parser.add_argument('--LR', default=5e-5, type=int, help='Learning rate for the 
 parser.add_argument('--EPS', default=1e-6, type=int, help='Epsilon of the model')
 parser.add_argument('--WD', default=0.01, type=int, help='Weight decay of the model')
 parser.add_argument('--random_state', default=42, type=int, help='Random state of the experiment (default 42)')
+parser.add_argument("--output_text", type=bool, nargs='?', const=True, default=False, help="Outputs text of the experiment results")
+parser.add_argument("--cpu", type=bool, nargs='?', const=True, default=False, help="Uses CPU for processing")
 parser.add_argument('--neptune_username', default="", type=str, help=' (Optional) For outputting training/eval metrics to neptune.ai. Valid neptune username. Not your neptune.ai API key must also be stored as $NEPTUNE_API_TOKEN environment variable.')
 
 args = parser.parse_args()
@@ -35,7 +37,8 @@ PARAMS = Parameters(dataset_name_list = dataset_list,
                     early_stopping_patience = args.early_stopping_patience,
                     num_epochs = args.num_epochs,
                     num_fine_tuning_epochs = args.num_fine_tuning_epochs,
-                    random_state = args.random_state)
+                    random_state = args.random_state,
+                    cpu= args.cpu)
 
 logger = NeptuneLogger(args.neptune_username)
 logger.create_experiment(PARAMS)
@@ -50,17 +53,22 @@ for task_name, task in task_dict.items():
 #Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:
     task_eval_metrics, task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=False)
-    # Output final results to disk
-    with open("./task_eval_metrics.txt","w") as f:
-        f.write( str(task_eval_metrics) )
-    with open("./task_test_metrics.txt","w") as f:
-        f.write( str(task_test_metrics) )
+
+    if args.output_text:
+        # Output final results to disk
+        with open("./task_eval_metrics.txt","w") as f:
+            f.write( str(task_eval_metrics) )
+        with open("./task_test_metrics.txt","w") as f:
+            f.write( str(task_test_metrics) )
 
 # Fine tune on each task individually
 ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
 
-# Output final results to disk
-with open("./ft_task_eval_metrics.txt","w") as f:
-    f.write( str(ft_task_eval_metrics) )
-with open("./ft_task_test_metrics.txt","w") as f:
-    f.write( str(ft_task_test_metrics) )
+if args.output_text:
+    # Output final results to disk
+    with open("./ft_task_eval_metrics.txt","w") as f:
+        f.write( str(ft_task_eval_metrics) )
+    with open("./ft_task_test_metrics.txt","w") as f:
+        f.write( str(ft_task_test_metrics) )
+
+logger.stop()
