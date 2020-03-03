@@ -9,6 +9,9 @@ class TaskBuilder:
         self.task_dict = {
             "maalej_2015": Task(data_getter_fn=self.get_maalej_2015, is_multilabel=False),
             "maalej_2015_bug_bin": Task(data_getter_fn=self.get_maalej_2015_bug_bin, is_multilabel=False),
+            "maalej_2015_rating_bin": Task(data_getter_fn=self.get_maalej_2015_rating_bin, is_multilabel=False),
+            "maalej_2015_feature_bin": Task(data_getter_fn=self.get_maalej_2015_feature_bin, is_multilabel=False),
+            "maalej_2015_user_bin": Task(data_getter_fn=self.get_maalej_2015_user_bin, is_multilabel=False),
             "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False),
             "ciurumelea_2017_fine": Task(data_getter_fn=self.get_ciurumelea_2017_fine, is_multilabel=True),
             "ciurumelea_2017_coarse": Task(data_getter_fn=self.get_ciurumelea_2017_coarse, is_multilabel=True)
@@ -33,7 +36,6 @@ class TaskBuilder:
             r = requests.get("https://mast.informatik.uni-hamburg.de/wp-content/uploads/2014/03/REJ_data.zip")
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(path = task_data_path)
-            os.remove(zip_file_path)
 
         json_path = os.path.join(task_data_path, "REJ_data", "all.json")
 
@@ -46,6 +48,8 @@ class TaskBuilder:
             "Title: " + x["title"] + " Comment: " + x["comment"] if x["title"] is not None else "Comment: " + x[
                 "comment"] for x in data], "label": [x["label"] for x in data]})
 
+        print(df.label.unique())
+
         train_val_idx = df.sample(frac=0.7, random_state=self.random_state).index
         test_idx = df.drop(train_val_idx).index
         train_idx = df.loc[train_val_idx].sample(frac=0.85, random_state=self.random_state).index
@@ -54,14 +58,26 @@ class TaskBuilder:
         return df.loc[train_idx], df.loc[valid_idx], df.loc[test_idx]
 
 
-    def get_maalej_2015_bug_bin(self):
+    def get_maalej_2015_bin(self, label):
         train, dev, test = self.get_maalej_2015()
 
-        train["label"] = train.label.apply(lambda x: x if x=="Bug" else "NoBug")
-        dev["label"] = dev.label.apply(lambda x: x if x=="Bug" else "NoBug")
-        test["label"] = test.label.apply(lambda x: x if x=="Bug" else "NoBug")
+        train["label"] = train.label.apply(lambda x: x if x==label else f"No{label}")
+        dev["label"] = dev.label.apply(lambda x: x if x==label else f"No{label}")
+        test["label"] = test.label.apply(lambda x: x if x==label else f"No{label}")
 
         return train, dev, test
+
+    def get_maalej_2015_bug_bin(self):
+        return self.get_maalej_2015_bin("Bug")
+
+    def get_maalej_2015_rating_bin(self):
+        return self.get_maalej_2015_bin("Rating")
+
+    def get_maalej_2015_feature_bin(self):
+        return self.get_maalej_2015_bin("Feature")
+
+    def get_maalej_2015_user_bin(self):
+        return self.get_maalej_2015_bin("UserExperience")
 
     def get_chen_2014_swiftkey(self):
         task_data_path = os.path.join(self.data_path, "chen_2014")
@@ -72,7 +88,6 @@ class TaskBuilder:
             r = requests.get("https://sites.google.com/site/appsuserreviews/home/datasets.zip?attredirects=0&d=1")
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(path=task_data_path)
-            os.remove(zip_file_path)
 
         def df_getter(data_path, label):
             with open(data_path, "r") as f:
@@ -88,7 +103,10 @@ class TaskBuilder:
 
         shutil.rmtree(task_data_path)
 
+
         train_and_val = train_info.append(train_noninfo)
+
+        print(train_and_val.label.unique())
 
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
@@ -144,7 +162,6 @@ class TaskBuilder:
             r = requests.get("https://zenodo.org/record/161842/files/panichella/UserReviewReference-Replication-Package-URR-v1.0.zip?download=1")
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(path=task_data_path)
-            os.remove(zip_file_path)
 
         review_data_path = os.path.join(task_data_path, "panichella-UserReviewReference-Replication-Package-643afe0", "data", "reviews", "golden_set.csv")
 
