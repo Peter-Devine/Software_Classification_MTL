@@ -78,11 +78,23 @@ class MulticlassRecall(MulticlassPrecisionRecall):
         super(MulticlassRecall, self).__init__(output_transform=output_transform, label_idx_of_interest=label_idx_of_interest)
 
     def compute(self):
-        print((self.tp + self.fn))
         if (self.tp + self.fn) == 0:
             return np.nan
         else:
             return self.tp / (self.tp + self.fn)
+
+class MulticlassF1(MulticlassPrecisionRecall):
+    def __init__(self, output_transform=lambda x: x, label_idx_of_interest=0):
+        super(MulticlassF1, self).__init__(output_transform=output_transform, label_idx_of_interest=label_idx_of_interest)
+
+    def compute(self):
+        prec = self.tp / (self.tp + self.fp) if (self.tp + self.fp) != 0 else None
+        rec = self.tp / (self.tp + self.fn) if (self.tp + self.fn) != 0 else None
+
+        if (prec == 0 and rec == 0) or prec is None or rec is None:
+            return np.nan
+        else:
+            return (prec * rec * 2 / (prec + rec))
 
 class MulticlassSingleClassAccuracy(MulticlassPrecisionRecall):
     def __init__(self, output_transform=lambda x: x, label_idx_of_interest=0):
@@ -145,7 +157,7 @@ def create_eval_engine(model, is_multilabel, n_classes, cpu):
           recall.attach(eval_engine, f"recall{str(n_classes)}")
           precision = MulticlassPrecision(label_idx_of_interest=i)
           precision.attach(eval_engine, f"precision{str(n_classes)}")
-          f1 = (precision * recall * 2 / (precision + recall))
+          f1 = MulticlassF1(label_idx_of_interest=i)
           f1.attach(eval_engine, f"f1{str(n_classes)}")
   else:
       accuracy = Accuracy()
