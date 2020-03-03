@@ -1,4 +1,4 @@
-import requests, zipfile, io, os, json
+import requests, zipfile, io, os, json, shutil
 import pandas as pd
 from task import Task
 from models import get_language_model
@@ -28,15 +28,19 @@ class TaskBuilder:
         task_data_path = os.path.join(self.data_path, "maalej_2015")
         # from https://mast.informatik.uni-hamburg.de/wp-content/uploads/2015/06/review_classification_preprint.pdf
         # Bug Report, Feature Request, or Simply Praise? On Automatically Classifying App Reviews
-        if not os.path.exists(os.path.join(task_data_path, "REJ_data.zip")):
+        zip_file_path = os.path.join(task_data_path, "REJ_data.zip")
+        if not os.path.exists(zip_file_path):
             r = requests.get("https://mast.informatik.uni-hamburg.de/wp-content/uploads/2014/03/REJ_data.zip")
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(path = task_data_path)
+            os.remove(zip_file_path)
 
         json_path = os.path.join(task_data_path, "REJ_data", "all.json")
 
         with open(json_path) as json_file:
             data = json.load(json_file)
+
+        shutil.rmtree(task_data_path)
 
         df = pd.DataFrame({"text": [
             "Title: " + x["title"] + " Comment: " + x["comment"] if x["title"] is not None else "Comment: " + x[
@@ -63,10 +67,12 @@ class TaskBuilder:
         task_data_path = os.path.join(self.data_path, "chen_2014")
         # from https://ink.library.smu.edu.sg/cgi/viewcontent.cgi?article=3323&context=sis_research
         # AR-Miner: Mining Informative Reviews for Developers from Mobile App Marketplace
-        if not os.path.exists(os.path.join(task_data_path, "datasets.zip")):
+        zip_file_path = os.path.join(task_data_path, "datasets.zip")
+        if not os.path.exists(zip_file_path):
             r = requests.get("https://sites.google.com/site/appsuserreviews/home/datasets.zip?attredirects=0&d=1")
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(path=task_data_path)
+            os.remove(zip_file_path)
 
         def df_getter(data_path, label):
             with open(data_path, "r") as f:
@@ -79,6 +85,8 @@ class TaskBuilder:
 
         test_info = df_getter(os.path.join(task_data_path, "datasets", "swiftkey", "test", "info.txt"), "informative")
         test_noninfo = df_getter(os.path.join(task_data_path, "datasets", "swiftkey", "test", "non-info.txt"), "non-informative")
+
+        shutil.rmtree(task_data_path)
 
         train_and_val = train_info.append(train_noninfo)
 
@@ -135,11 +143,15 @@ class TaskBuilder:
         if not os.path.exists(zip_file_path):
             r = requests.get("https://zenodo.org/record/161842/files/panichella/UserReviewReference-Replication-Package-URR-v1.0.zip?download=1")
             z = zipfile.ZipFile(io.BytesIO(r.content))
-            z.extractall(path=zip_file_path)
+            z.extractall(path=task_data_path)
+            os.remove(zip_file_path)
 
         review_data_path = os.path.join(task_data_path, "panichella-UserReviewReference-Replication-Package-643afe0", "data", "reviews", "golden_set.csv")
 
         df = pd.read_csv(review_data_path, encoding="iso-8859-1")
+
+        shutil.rmtree(task_data_path)
+
         df["text"] = df.reviewText
 
         label_columns = ["classification", "class1", "class2", "class3", "class4", "class5"]
