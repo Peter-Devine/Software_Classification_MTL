@@ -24,11 +24,11 @@ class TopK(Metric):
             self.top_k_values = top_k.values.cpu()
             self.top_k_labels = y[top_k.indices].cpu()
         else:
-            concatenated_values = torch.cat((torch.softmax(y_pred, dim=1)[:,self.label_idx_of_interest], self.top_k_values), dim=0)
-            concatenated_labels = torch.cat((y, self.top_k_labels), dim=0)
+            concatenated_values = torch.cat((torch.softmax(y_pred, dim=1)[:,self.label_idx_of_interest].cpu(), self.top_k_values), dim=0)
+            concatenated_labels = torch.cat((y.cpu(), self.top_k_labels), dim=0)
             top_k = torch.topk(concatenated_values, self.k, dim=0)
-            self.top_k_values = top_k.values.cpu()
-            self.top_k_labels = concatenated_labels[top_k.indices].cpu()
+            self.top_k_values = top_k.values
+            self.top_k_labels = concatenated_labels[top_k.indices]
 
     def compute(self):
         assert len(self.top_k_labels) == self.k, f"There are {self.top_k_labels} labels when there should be {self.k} labels when calculating top k labels"
