@@ -76,8 +76,7 @@ class MulticlassPrecisionRecall(Metric):
             tp = int(((y_pred == 1) & (y == 1)).sum())
             tn = int(((y_pred == 0) & (y == 0)).sum())
 
-            for i in range(self.n_classes):
-                self.class_count[i].update(fp=fp, fn=fn, tp=tp, tn=tn)
+            self.class_count[i].update(fp=fp, fn=fn, tp=tp, tn=tn)
 
 class MulticlassPrecision(MulticlassPrecisionRecall):
     def __init__(self, output_transform=lambda x: x, n_classes=2):
