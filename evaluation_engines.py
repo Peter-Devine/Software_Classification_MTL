@@ -165,7 +165,7 @@ class MulticlassOverallAccuracy(MulticlassAccuracy):
 
 class MulticlassPerClassAccuracy(MulticlassAccuracy):
     def __init__(self, output_transform=lambda x: x, n_classes=2):
-        super(MulticlassOverallAccuracy, self).__init__(output_transform=output_transform, n_classes=n_classes)
+        super(MulticlassPerClassAccuracy, self).__init__(output_transform=output_transform, n_classes=n_classes)
 
     def compute(self):
         return self.compute()["per_class"]
