@@ -90,7 +90,7 @@ class MulticlassPrecision(MulticlassPrecisionRecall):
             if (tp + fp) == 0:
                 results.append(np.nan)
             else:
-                results.append(tp / (tp + fp))
+                results.append(round(tp / (tp + fp), 5))
         return results
 
 class MulticlassRecall(MulticlassPrecisionRecall):
@@ -105,7 +105,7 @@ class MulticlassRecall(MulticlassPrecisionRecall):
             if (tp + fn) == 0:
                 results.append(np.nan)
             else:
-                results.append(tp / (tp + fn))
+                results.append(round(tp / (tp + fn), 5))
         return results
 
 class MulticlassF1(MulticlassPrecisionRecall):
@@ -125,7 +125,7 @@ class MulticlassF1(MulticlassPrecisionRecall):
             if (prec == 0 and rec == 0) or prec is None or rec is None:
                 results.append(np.nan)
             else:
-                results.append(prec * rec * 2 / (prec + rec))
+                results.append(round(prec * rec * 2 / (prec + rec), 5))
         return results
 
 
@@ -149,9 +149,9 @@ class MulticlassAccuracy(MulticlassPrecisionRecall):
             if (tp + tn + fp + fn) == 0:
                 results.append(np.nan)
             else:
-                results.append((tp + tn) / (tp + tn + fp + fn))
+                results.append(round((tp + tn) / (tp + tn + fp + fn), 5))
 
-        overall_accuracy = hits / (hits + misses) if hits + misses > 0 else np.nan
+        overall_accuracy = round(hits / (hits + misses), 5) if hits + misses > 0 else np.nan
 
         return {"per_class": results, "overall": overall_accuracy}
 
