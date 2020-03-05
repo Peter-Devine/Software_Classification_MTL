@@ -53,7 +53,7 @@ class MulticlassPrecisionRecall(Metric):
     def __init__(self, output_transform=lambda x: x, n_classes=2):
         self.class_count = []
         for i in range(n_classes):
-            self.class_count[i] = CountHolder()
+            self.class_count.append(CountHolder())
 
         self.n_classes = n_classes
         self.sigmoid_fn = torch.nn.Sigmoid()
