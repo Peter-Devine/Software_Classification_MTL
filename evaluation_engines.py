@@ -134,7 +134,7 @@ class MulticlassAccuracy(MulticlassPrecisionRecall):
     def __init__(self, output_transform=lambda x: x, n_classes=2):
         super(MulticlassAccuracy, self).__init__(output_transform=output_transform, n_classes=n_classes)
 
-    def compute(self):
+    def get_averages(self):
         results = []
         hits = 0
         misses = 0
@@ -161,14 +161,14 @@ class MulticlassOverallAccuracy(MulticlassAccuracy):
         super(MulticlassOverallAccuracy, self).__init__(output_transform=output_transform, n_classes=n_classes)
 
     def compute(self):
-        return self.compute()["overall"]
+        return self.get_averages()["overall"]
 
 class MulticlassPerClassAccuracy(MulticlassAccuracy):
     def __init__(self, output_transform=lambda x: x, n_classes=2):
         super(MulticlassPerClassAccuracy, self).__init__(output_transform=output_transform, n_classes=n_classes)
 
     def compute(self):
-        return self.compute()["per_class"]
+        return self.get_averages()["per_class"]
 
 def create_eval_engine(model, is_multilabel, n_classes, cpu):
 
