@@ -44,9 +44,11 @@ class NeptuneLogger:
         else:
             print(f"metric_name: {metric_name}, \nx:{x}, \ntext:{text}\n\n")
 
-    def log_label_map(self, label_map, task_name):
+    def log_dict(self, dict_name, task_name, dict):
         if self.logger_active:
-            neptune.log_text(f"{task_name} label map", str(label_map))
+            neptune.log_text(f"{task_name} {dict_name}", str(dict))
+        else:
+            print(f"{task_name} {dict_name}: {str(dict)}")
 
     def log_results(self, task_name, split_type, epoch, results_dict):
         if self.logger_active:

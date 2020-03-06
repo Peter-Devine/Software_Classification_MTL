@@ -17,8 +17,8 @@ parser.add_argument('--LR', default=5e-5, type=int, help='Learning rate for the 
 parser.add_argument('--EPS', default=1e-6, type=int, help='Epsilon of the model')
 parser.add_argument('--WD', default=0.01, type=int, help='Weight decay of the model')
 parser.add_argument('--random_state', default=42, type=int, help='Random state of the experiment (default 42)')
-parser.add_argument("--output_text", type=bool, nargs='?', const=True, default=False, help="Outputs text of the experiment results")
-parser.add_argument("--cpu", type=bool, nargs='?', const=True, default=False, help="Uses CPU for processing")
+parser.add_argument('--output_text', type=bool, nargs='?', const=True, default=False, help="Outputs text of the experiment results")
+parser.add_argument('--cpu', type=bool, nargs='?', const=True, default=False, help="Uses CPU for processing")
 parser.add_argument('--neptune_username', default="", type=str, help=' (Optional) For outputting training/eval metrics to neptune.ai. Valid neptune username. Not your neptune.ai API key must also be stored as $NEPTUNE_API_TOKEN environment variable.')
 
 args = parser.parse_args()
@@ -46,8 +46,10 @@ task_builder = TaskBuilder(random_state=PARAMS.random_state)
 
 task_dict = task_builder.build_tasks(dataset_list, PARAMS)
 
+# Log some useful data that is pertinent when reviewing results of training
 for task_name, task in task_dict.items():
-    logger.log_label_map(task_name, task.label_map)
+    logger.log_dict("label map", task_name, task.label_map)
+    logger.log_dict("task metadata", task_name, task.data_info)
 
 #Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:
