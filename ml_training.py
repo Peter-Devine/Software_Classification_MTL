@@ -35,6 +35,9 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     # Get the required number of epochs for training
     epochs = PARAMS.num_fine_tuning_epochs if is_fine_tuning else PARAMS.num_epochs
 
+    def is_patience_exceeded(task_name):
+        return is_fine_tuning and epochs_since_last_best[task_name] >= PARAMS.early_stopping_patience
+
     for epoch in range(epochs):
 
         # Reset iterable for each task
@@ -45,7 +48,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
         for task_name in task_training_list:
             # Skip training this task if training patience already exceeded (during fine tuning only).
             # We do not skip on MTL training as there could be complex interactions between the training of multiple tasks.
-            if is_fine_tuning and epochs_since_last_best[task_name] > PARAMS.early_stopping_patience:
+            if is_patience_exceeded(task_name):
+                print(f"{task_name} patience exceeded, ceasing training on this task")
                 continue
 
             task = task_dict[task_name]
@@ -81,6 +85,10 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
         # VALIDATE
         for task_name, task in task_dict.items():
+            if is_patience_exceeded(task_name):
+                print(f"{task_name} patience exceeded, ceasing evaluation on this task")
+                continue
+
             validation_results = task_eval_engines[task_name].run(task.valid_data).metrics
             logger.log_results(run_type_log_prefix + task_name, "valid", epoch, validation_results)
 
