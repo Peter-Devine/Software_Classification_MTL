@@ -22,9 +22,9 @@ parser.add_argument('--cpu', type=bool, nargs='?', const=True, default=False, he
 parser.add_argument('--neptune_username', default="", type=str, help=' (Optional) For outputting training/eval metrics to neptune.ai. Valid neptune username. Not your neptune.ai API key must also be stored as $NEPTUNE_API_TOKEN environment variable.')
 
 args = parser.parse_args()
-print(args)
-
+print(f"Inputted args are:\n{args}")
 dataset_list = args.dataset_list.split(",")
+
 PARAMS = Parameters(dataset_name_list = dataset_list,
                     lm_model_name = args.model_name,
                     max_length = args.max_length,
@@ -50,6 +50,7 @@ task_dict = task_builder.build_tasks(dataset_list, PARAMS)
 for task_name, task in task_dict.items():
     logger.log_dict("label map", task_name, task.label_map)
     logger.log_dict("task metadata", task_name, task.data_info)
+    logger.log_dict("baselines", task_name, task.best_baseline_values)
 
 #Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:
