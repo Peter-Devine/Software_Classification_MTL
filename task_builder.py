@@ -12,6 +12,7 @@ class TaskBuilder:
             "maalej_2015_rating_bin": Task(data_getter_fn=self.get_maalej_2015_rating_bin, is_multilabel=False),
             "maalej_2015_feature_bin": Task(data_getter_fn=self.get_maalej_2015_feature_bin, is_multilabel=False),
             "maalej_2015_user_bin": Task(data_getter_fn=self.get_maalej_2015_user_bin, is_multilabel=False),
+            "maalej_2015_user_bin_multilabel": Task(data_getter_fn=self.get_maalej_2015_user_bin_multilabel, is_multilabel=True),
             "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False),
             "ciurumelea_2017_fine": Task(data_getter_fn=self.get_ciurumelea_2017_fine, is_multilabel=True),
             "ciurumelea_2017_coarse": Task(data_getter_fn=self.get_ciurumelea_2017_coarse, is_multilabel=True)
@@ -78,6 +79,13 @@ class TaskBuilder:
 
     def get_maalej_2015_user_bin(self):
         return self.get_maalej_2015_bin("UserExperience")
+
+    def get_maalej_2015_user_bin_multilabel(self):
+        train, dev, test = self.get_maalej_2015_bin("UserExperience")
+        train.rename(columns={'label': 'label_user'}, inplace=True)
+        dev.rename(columns={'label': 'label_user'}, inplace=True)
+        test.rename(columns={'label': 'label_user'}, inplace=True)
+        return train, dev, test
 
     def get_chen_2014_swiftkey(self):
         task_data_path = os.path.join(self.data_path, "chen_2014")
