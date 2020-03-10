@@ -79,8 +79,9 @@ class MulticlassPrecisionRecall(Metric):
             self.class_count[i].update(fp=fp, fn=fn, tp=tp, tn=tn)
 
 class MulticlassPrecision(MulticlassPrecisionRecall):
-    def __init__(self, output_transform=lambda x: x, n_classes=2):
+    def __init__(self, output_transform=lambda x: x, n_classes=2, average=False):
         super(MulticlassPrecision, self).__init__(output_transform=output_transform, n_classes=n_classes)
+        self.average = average
 
     def compute(self):
         results = []
@@ -91,11 +92,16 @@ class MulticlassPrecision(MulticlassPrecisionRecall):
                 results.append(np.nan)
             else:
                 results.append(round(tp / (tp + fp), 5))
-        return results
+
+        if self.average:
+            return sum(results) / len(results)
+        else:
+            return results
 
 class MulticlassRecall(MulticlassPrecisionRecall):
-    def __init__(self, output_transform=lambda x: x, n_classes=2):
+    def __init__(self, output_transform=lambda x: x, n_classes=2, average=False):
         super(MulticlassRecall, self).__init__(output_transform=output_transform, n_classes=n_classes)
+        self.average = average
 
     def compute(self):
         results = []
@@ -106,11 +112,17 @@ class MulticlassRecall(MulticlassPrecisionRecall):
                 results.append(np.nan)
             else:
                 results.append(round(tp / (tp + fn), 5))
-        return results
 
-class MulticlassF1(MulticlassPrecisionRecall):
-    def __init__(self, output_transform=lambda x: x, n_classes=2):
-        super(MulticlassF1, self).__init__(output_transform=output_transform, n_classes=n_classes)
+        if self.average:
+            return sum(results) / len(results)
+        else:
+            return results
+
+class MulticlassF(MulticlassPrecisionRecall):
+    def __init__(self, output_transform=lambda x: x, n_classes=2, average=False, f_n=1):
+        super(MulticlassF, self).__init__(output_transform=output_transform, n_classes=n_classes)
+        self.f_n = f_n
+        self.average = average
 
     def compute(self):
         results = []
@@ -125,8 +137,14 @@ class MulticlassF1(MulticlassPrecisionRecall):
             if (prec == 0 and rec == 0) or prec is None or rec is None:
                 results.append(np.nan)
             else:
-                results.append(round(prec * rec * 2 / (prec + rec), 5))
-        return results
+                beta_squared = self.f_n**2
+                f_score = (1+beta_squared) * prec * rec / ((beta_squared*prec) + rec)
+                results.append(round(f_score, 5))
+
+        if self.average:
+            return sum(results) / len(results)
+        else:
+            return results
 
 
 class MulticlassAccuracy(MulticlassPrecisionRecall):
@@ -190,13 +208,24 @@ def create_eval_engine(model, is_multilabel, n_classes, cpu):
       accuracy = MulticlassOverallAccuracy(n_classes=n_classes)
       accuracy.attach(eval_engine, "accuracy")
       per_class_accuracy = MulticlassPerClassAccuracy(n_classes=n_classes)
-      per_class_accuracy.attach(eval_engine, f"per class accuracy")
+      per_class_accuracy.attach(eval_engine, "per class accuracy")
       recall = MulticlassRecall(n_classes=n_classes)
-      recall.attach(eval_engine, f"recall")
+      recall.attach(eval_engine, "recall")
       precision = MulticlassPrecision(n_classes=n_classes)
-      precision.attach(eval_engine, f"precision")
-      f1 = MulticlassF1(n_classes=n_classes)
-      f1.attach(eval_engine, f"f1")
+      precision.attach(eval_engine, "precision")
+      f1 = MulticlassF(n_classes=n_classes, f_n=1)
+      f1.attach(eval_engine, "f1")
+      f2= MulticlassF(n_classes=n_classes, f_n=2)
+      f2.attach(eval_engine, "f2")
+
+      avg_recall = MulticlassRecall(n_classes=n_classes, average=True)
+      avg_recall.attach(eval_engine, "average recall")
+      avg_precision = MulticlassPrecision(n_classes=n_classes, average=True)
+      avg_precision.attach(eval_engine, "average precision")
+      avg_f1 = MulticlassF(n_classes=n_classes, average=True, f_n=1)
+      avg_f1.attach(eval_engine, "average f1")
+      avg_f2= MulticlassF(n_classes=n_classes, average=True, f_n=2)
+      avg_f2.attach(eval_engine, "average f2")
   else:
       accuracy = Accuracy()
       accuracy.attach(eval_engine, "accuracy")
@@ -208,6 +237,17 @@ def create_eval_engine(model, is_multilabel, n_classes, cpu):
       confusion_matrix.attach(eval_engine, "confusion_matrix")
       f1 = (precision * recall * 2 / (precision + recall))
       f1.attach(eval_engine, "f1")
+      f2 = (precision * recall * 5 / ((4*precision) + recall))
+      f2.attach(eval_engine, "f2")
+
+      avg_recall = Recall(average=True)
+      avg_recall.attach(eval_engine, "average recall")
+      avg_precision = Precision(average=True)
+      avg_precision.attach(eval_engine, "average precision")
+      avg_f1 = (avg_precision * avg_recall * 2 / (avg_precision + avg_recall))
+      avg_f1.attach(eval_engine, "average f1")
+      avg_f2 = (precision * recall * 5 / ((4*precision) + recall))
+      avg_f2.attach(eval_engine, "average f2")
 
       if n_classes == 2:
           top_k = TopK(k=10, label_idx_of_interest=0)
