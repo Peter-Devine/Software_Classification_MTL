@@ -23,7 +23,7 @@ def get_df_metadata(train_df, valid_df, test_df, PARAMS, is_multilabel):
             if word in word_dist:
                 word_dist.pop(word)
 
-        return word_dist.most_common(50)
+        return word_dist.most_common(10)
 
     def get_multiclass_label_count(df):
         return {

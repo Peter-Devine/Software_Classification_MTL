@@ -46,7 +46,8 @@ class NeptuneLogger:
 
     def log_dict(self, dict_name, task_name, dict):
         if self.logger_active:
-            neptune.log_text(f"{task_name} {dict_name}", str(dict))
+            for key, value in dict.items():
+                neptune.log_text(f"{task_name} {dict_name}", f"{str(key)}: {str(value)}")
         else:
             print(f"{task_name} {dict_name}: {str(dict)}")
 
