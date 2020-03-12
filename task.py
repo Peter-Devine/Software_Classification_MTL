@@ -17,9 +17,8 @@ class Task:
         # E.g. if dataset A has 10 batches and dataset B has 100 batches, we want to train our model on dataset B 10 times more frequently as dataset A
         self.train_length = ceil(train.shape[0] / PARAMS.batch_size_train)
 
-        # Get the baseline model results for the task
-        baseline_models = BaselineModels(is_multilabel = self.is_multilabel)
-        self.best_baseline_values, self.all_baseline_values = baseline_models.get_baselines(train, valid, test)
+        # Get the baseline model results for the task 
+        self.best_baseline_values, self.all_baseline_values = self.get_baselines(train, valid, test, best_metric=PARAMS.best_metric)
 
         # Convert these dataframes into tensor datasets, with inputs (token ids) and labels (integers for multi-class, one-hot vectors for multi-label), as well as the mappings of these values to real labels. We also scrape a bunch of useful data of the datasets to compare them in later MTL tasks
         self.train_data, self.valid_data, self.test_data, self.label_map, self.data_info = self.get_tensor_dataset(train, valid, test, PARAMS)
@@ -46,6 +45,12 @@ class Task:
             tensors_and_map = get_multiclass_dataset_from_df(train_tensor_dataset, valid_tensor_dataset, test_tensor_dataset, PARAMS)
 
         return tensors_and_map
+
+    def get_baselines(self, train, valid, test):
+        # Get the baseline model results for the task
+        baseline_models = BaselineModels(is_multilabel = self.is_multilabel)
+        best_baseline_values, all_baseline_values = baseline_models.get_baselines(train, valid, test)
+        return best_baseline_values, all_baseline_values
 
     def get_loss_function(self):
         if self.is_multilabel:

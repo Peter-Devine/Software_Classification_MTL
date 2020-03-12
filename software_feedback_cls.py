@@ -16,6 +16,7 @@ parser.add_argument('--early_stopping_patience', default=20, type=int, help='How
 parser.add_argument('--LR', default=5e-5, type=int, help='Learning rate for the model')
 parser.add_argument('--EPS', default=1e-6, type=int, help='Epsilon of the model')
 parser.add_argument('--WD', default=0.01, type=int, help='Weight decay of the model')
+parser.add_argument('--best_metric', default="f1", type=str, help='What metric should be evaluated against for MTL/baseline performance?')
 parser.add_argument('--random_state', default=42, type=int, help='Random state of the experiment (default 42)')
 parser.add_argument('--output_text', type=bool, nargs='?', const=True, default=False, help="Outputs text of the experiment results")
 parser.add_argument('--cpu', type=bool, nargs='?', const=True, default=False, help="Uses CPU for processing")
@@ -36,6 +37,7 @@ PARAMS = Parameters(dataset_name_list = dataset_list,
                     early_stopping_patience = args.early_stopping_patience,
                     num_epochs = args.num_epochs,
                     num_fine_tuning_epochs = args.num_fine_tuning_epochs,
+                    best_metric = args.best_metric,
                     random_state = args.random_state,
                     cpu= args.cpu)
 

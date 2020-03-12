@@ -93,7 +93,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
             logger.log_results(run_type_log_prefix + task_name, "valid", epoch, validation_results)
 
             # What metric will we compare all previous performance against
-            comparison_metric = validation_results["average f1"]
+            comparsion_metric_name = PARAMS.best_metric if PARAMS.best_metric == "accuracy" else f"average {PARAMS.best_metric}"
+            comparison_metric = validation_results[comparsion_metric_name]
 
             if comparison_metric > max(task_eval_metrics[task_name]):
                 model_saver.save_model(file_name=task_name, model=task.model)
