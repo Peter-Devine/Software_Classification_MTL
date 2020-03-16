@@ -2,7 +2,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import ComplementNB
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import CategoricalNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import GradientBoostingClassifier
@@ -18,7 +17,6 @@ class BaselineModels:
             "Complement NB": ComplementNB,
             "Bernoulli NB": BernoulliNB,
             "Multinomial NB": MultinomialNB,
-            "Categorical NB": CategoricalNB,
             "Decision tree classifier": DecisionTreeClassifier,
             "Support vector classifier": SVC,
             "Gradient boosting classifier": GradientBoostingClassifier
