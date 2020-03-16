@@ -46,10 +46,10 @@ class Task:
 
         return tensors_and_map
 
-    def get_baselines(self, train, valid, test):
+    def get_baselines(self, train, valid, test, best_metric):
         # Get the baseline model results for the task
         baseline_models = BaselineModels(is_multilabel = self.is_multilabel)
-        best_baseline_values, all_baseline_values = baseline_models.get_baselines(train, valid, test)
+        best_baseline_values, all_baseline_values = baseline_models.get_baselines(train, valid, test, best_metric)
         return best_baseline_values, all_baseline_values
 
     def get_loss_function(self):

@@ -116,17 +116,17 @@ class BaselineModels:
                 input_valid_df["baseline_label"] = input_valid_df[column]
                 input_test_df["baseline_label"] = input_test_df[column]
 
-                best_per_label_results[column], per_label_results[column] = get_results_on_binary_task(input_train_df, input_valid_df, input_test_df, best_metric)
+                best_per_label_results[column], per_label_results[column] = self.get_results_on_binary_task(input_train_df, input_valid_df, input_test_df, best_metric)
         else:
             input_train_df["baseline_label"] = input_train_df["label"]
             input_valid_df["baseline_label"] = input_valid_df["label"]
             input_test_df["baseline_label"] = input_test_df["label"]
-            best_per_label_results["multiclass"], per_label_results["multiclass"] = get_results_on_binary_task(input_train_df, input_valid_df, input_test_df, best_metric)
+            best_per_label_results["multiclass"], per_label_results["multiclass"] = self.get_results_on_binary_task(input_train_df, input_valid_df, input_test_df, best_metric)
             for label in input_train_df.label.unique():
                 input_train_df["baseline_label"] = input_train_df["label"] == label
                 input_valid_df["baseline_label"] = input_valid_df["label"] == label
                 input_test_df["baseline_label"] = input_test_df["label"] == label
 
-                best_per_label_results[label], per_label_results[label] = get_results_on_binary_task(input_train_df, input_valid_df, input_test_df, best_metric)
+                best_per_label_results[label], per_label_results[label] = self.get_results_on_binary_task(input_train_df, input_valid_df, input_test_df, best_metric)
 
         return best_per_label_results, per_label_results

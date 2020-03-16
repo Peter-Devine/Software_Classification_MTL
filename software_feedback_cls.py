@@ -56,7 +56,7 @@ for task_name, task in task_dict.items():
     logger.log_dict("all baselines", task_name, task.all_baseline_values)
 
 #Do multi-task learning if more than one task is supplied
-if len(dataset_list) > 1:
+if len(dataset_list) > 1 and PARAMS.num_epochs > 0:
     task_eval_metrics, task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=False)
 
     if args.output_text:
@@ -66,14 +66,15 @@ if len(dataset_list) > 1:
         with open("./task_test_metrics.txt","w") as f:
             f.write( str(task_test_metrics) )
 
-# Fine tune on each task individually
-ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
-
-if args.output_text:
-    # Output final results to disk
-    with open("./ft_task_eval_metrics.txt","w") as f:
-        f.write( str(ft_task_eval_metrics) )
-    with open("./ft_task_test_metrics.txt","w") as f:
-        f.write( str(ft_task_test_metrics) )
+if PARAMS.num_fine_tuning_epochs > 0:
+    # Fine tune on each task individually
+    ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
+    
+    if args.output_text:
+        # Output final results to disk
+        with open("./ft_task_eval_metrics.txt","w") as f:
+            f.write( str(ft_task_eval_metrics) )
+        with open("./ft_task_test_metrics.txt","w") as f:
+            f.write( str(ft_task_test_metrics) )
 
 logger.stop()
