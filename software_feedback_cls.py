@@ -69,7 +69,7 @@ if len(dataset_list) > 1 and PARAMS.num_epochs > 0:
 if PARAMS.num_fine_tuning_epochs > 0:
     # Fine tune on each task individually
     ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
-    
+
     if args.output_text:
         # Output final results to disk
         with open("./ft_task_eval_metrics.txt","w") as f:
