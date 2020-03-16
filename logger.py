@@ -44,11 +44,11 @@ class NeptuneLogger:
         else:
             print(f"metric_name: {metric_name}, \nx:{x}, \ntext:{text}\n\n")
 
-    def log_dict(self, dict_name, task_name, dict, recursion_level = 0):
+    def log_dict(self, dict_name, task_name, input_dict, recursion_level = 0):
         if self.logger_active:
             # Add spaces so that dict prints prettily in logger
             spacing_str = '  '*recursion_level
-            for key, value in dict.items():
+            for key, value in input_dict.items():
                 if type(value) == dict:
                     neptune.log_text(f"{task_name} {dict_name}", f"{spacing_str}{str(key)}")
                     self.log_dict(dict_name, task_name, value, recursion_level+1)
