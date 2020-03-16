@@ -88,6 +88,10 @@ class TaskBuilder:
         train.rename(columns={'label': 'label_user'}, inplace=True)
         dev.rename(columns={'label': 'label_user'}, inplace=True)
         test.rename(columns={'label': 'label_user'}, inplace=True)
+
+        train["label_user"] = train["label_user"] == "UserExperience"
+        dev["label_user"] = dev["label_user"] == "UserExperience"
+        test["label_user"] = test["label_user"] == "UserExperience"
         return train, dev, test
 
     def get_chen_2014_swiftkey(self):

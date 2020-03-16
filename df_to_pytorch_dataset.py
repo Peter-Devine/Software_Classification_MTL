@@ -4,7 +4,6 @@ import torch
 from functools import partial
 import pandas as pd
 import numpy as np
-from meta_data_scraper import get_df_metadata
 
 def get_ids_for_splits(train_df, valid_df, test_df, PARAMS):
 
@@ -38,8 +37,6 @@ def create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_tes
 # Exclusive multi-class
 def get_multiclass_dataset_from_df(train_df, valid_df, test_df, PARAMS):
 
-    data_info = get_df_metadata(train_df, valid_df, test_df, PARAMS, is_multilabel=False)
-
     X_train, X_valid, X_test = get_ids_for_splits(train_df, valid_df, test_df, PARAMS)
 
     def get_label_list(df):
@@ -60,12 +57,10 @@ def get_multiclass_dataset_from_df(train_df, valid_df, test_df, PARAMS):
 
     train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS, is_multilabel=False)
 
-    return train_data, valid_data, test_data, code_map, data_info
+    return train_data, valid_data, test_data, code_map
 
 # Multi-label
 def get_multilabel_dataset_from_df(train_df, valid_df, test_df, PARAMS):
-
-    data_info = get_df_metadata(train_df, valid_df, test_df, PARAMS, is_multilabel=True)
 
     X_train, X_valid, X_test = get_ids_for_splits(train_df, valid_df, test_df, PARAMS)
 
@@ -87,4 +82,4 @@ def get_multilabel_dataset_from_df(train_df, valid_df, test_df, PARAMS):
 
     train_data, valid_data, test_data = create_dataset_from_series(X_train, y_train, X_valid, y_valid, X_test, y_test, PARAMS, is_multilabel=True)
 
-    return train_data, valid_data, test_data, code_map, data_info
+    return train_data, valid_data, test_data, code_map
