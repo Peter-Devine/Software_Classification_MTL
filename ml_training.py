@@ -1,6 +1,7 @@
 import random
 from evaluation_engines import create_eval_engine
 from model_saver import ModelSaver
+import time
 
 def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     model_saver = ModelSaver(model_dir="./models")
@@ -37,6 +38,9 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
     def is_patience_exceeded(task_name):
         return is_fine_tuning and epochs_since_last_best[task_name] >= PARAMS.early_stopping_patience
+
+    # Start clock before training to measure how long it takes to find a validated best model
+    train_time_start = time.clock()
 
     for epoch in range(epochs):
 
@@ -101,6 +105,10 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
             else:
                 epochs_since_last_best[task_name] += 1
             task_eval_metrics[task_name].append(comparison_metric)
+
+    train_time_end = time.clock()
+
+    task_eval_metrics["time_elapsed"] = train_time_end - train_time_start
 
     # TEST
     task_test_metrics = {task_name: None for task_name, task in task_dict.items()}

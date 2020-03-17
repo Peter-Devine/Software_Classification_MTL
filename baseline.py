@@ -10,6 +10,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 from functools import partial
+import time
 
 class BaselineModels:
     def __init__(self, is_multilabel):
@@ -25,10 +26,10 @@ class BaselineModels:
         }
         self.metrics = {
             "accuracy": accuracy_score,
-            "f1": partial(f1_score, average=None),
+            "f1": f1_score,
             "average f1": partial(f1_score, average="macro"),
-            "precision": partial(precision_score, average=None),
-            "recall": partial(recall_score, average=None)
+            "precision": precision_score,
+            "recall": recall_score
         }
 
     # TODO: Get Zero shot baslines
@@ -77,9 +78,18 @@ class BaselineModels:
             results["multiclass label map"] = binarizer.classes_
             best_results["multiclass label map"] = binarizer.classes_
 
+        # Start a clock before iterating through all types of data and model types to measure time taken to find best model
+        train_time_start = time.clock()
+
+        # Iterate through all input types (bag-of-words and TFIDF)
         for input_type_name, (train, valid, test) in input_types.items():
+
+            # Create a results dict for each input type
             results[input_type_name] = {}
+
+            # Cycle through each type of model
             for model_name, model_class in self.model_dict.items():
+
                 # Initialise the model, and train it on the training data
                 model = model_class()
                 model.fit(train, train_df.baseline_label)
@@ -90,12 +100,19 @@ class BaselineModels:
                 for metric_name, metric_fn in self.metrics.items():
                     per_model_results[metric_name] = {}
 
-                    if multiclass:
-                        valid_score = metric_fn(binarizer.transform(valid_df.baseline_label), binarizer.transform(valid_preds))
-                        test_score = metric_fn(binarizer.transform(test_df.baseline_label), binarizer.transform(test_preds))
+                    # If we are doing multiclass classification, then we want the f1 score for all classes.
+                    # If we are doing binary, then we do not want the 0 and the 1 f1 score, just the 1 f1 score.
+                    if metric_name in ["f1", "precision", "recall"] and not multiclass:
+                        applied_metric_fn = partial(metric_fn, average="binary")
                     else:
-                        valid_score = metric_fn(valid_df.baseline_label, valid_preds)
-                        test_score = metric_fn(test_df.baseline_label, test_preds)
+                        applied_metric_fn = partial(metric_fn, average=None)
+
+                    if multiclass:
+                        valid_score = applied_metric_fn(binarizer.transform(valid_df.baseline_label), binarizer.transform(valid_preds))
+                        test_score = applied_metric_fn(binarizer.transform(test_df.baseline_label), binarizer.transform(test_preds))
+                    else:
+                        valid_score = applied_metric_fn(valid_df.baseline_label, valid_preds)
+                        test_score = applied_metric_fn(test_df.baseline_label, test_preds)
 
                     per_model_results[metric_name]["valid"] = valid_score
                     per_model_results[metric_name]["test"] = test_score
@@ -108,10 +125,13 @@ class BaselineModels:
 
                 results[input_type_name][model_name] = per_model_results
 
+        train_time_end = time.clock()
+
         best_results.update({
             "best score": best_score,
             "best model": best_model,
-            "best config": best_config
+            "best config": best_config,
+            "time taken to achieve": train_time_end - train_time_start
         })
 
         return best_results, results
