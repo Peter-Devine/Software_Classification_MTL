@@ -13,6 +13,7 @@ class Task:
     def build_task(self, language_model, PARAMS):
         # Download the dataset into a split of train, validation and test Pandas dataframes
         train, valid, test = self.data_getter_fn()
+        self.train_df, self.valid_df, self.test_df = train, valid, test
 
         # Get some metadata surrounding our datasets
         self.data_info = get_df_metadata(train, valid, test, PARAMS, is_multilabel=self.is_multilabel)
@@ -21,7 +22,7 @@ class Task:
         # E.g. if dataset A has 10 batches and dataset B has 100 batches, we want to train our model on dataset B 10 times more frequently as dataset A
         self.train_length = ceil(train.shape[0] / PARAMS.batch_size_train)
 
-        # Get the baseline model results for the task 
+        # Get the baseline model results for the task
         self.best_baseline_values, self.all_baseline_values = self.get_baselines(train, valid, test, best_metric=PARAMS.best_metric)
 
         # Convert these dataframes into tensor datasets, with inputs (token ids) and labels (integers for multi-class, one-hot vectors for multi-label), as well as the mappings of these values to real labels. We also scrape a bunch of useful data of the datasets to compare them in later MTL tasks
@@ -52,8 +53,8 @@ class Task:
 
     def get_baselines(self, train, valid, test, best_metric):
         # Get the baseline model results for the task
-        baseline_models = BaselineModels(is_multilabel = self.is_multilabel)
-        best_baseline_values, all_baseline_values = baseline_models.get_baselines(train, valid, test, best_metric)
+        baseline_models = BaselineModels()
+        best_baseline_values, all_baseline_values = baseline_models.get_baselines(train, valid, test, best_metric, self.is_multilabel)
         return best_baseline_values, all_baseline_values
 
     def get_loss_function(self):

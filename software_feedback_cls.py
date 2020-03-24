@@ -3,6 +3,7 @@ from task_builder import TaskBuilder
 from parameters import Parameters
 from ml_training import train_on_tasks
 from logger import NeptuneLogger
+from baseline import BaselineModels
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_list', required=True, type=str, help='Comma separated list of datasets (E.g. "maalej_2015,chen_2014_swiftkey,ciurumelea_2017_fine"). No spaces between datasets.')
@@ -17,6 +18,7 @@ parser.add_argument('--LR', default=5e-5, type=int, help='Learning rate for the 
 parser.add_argument('--EPS', default=1e-6, type=int, help='Epsilon of the model')
 parser.add_argument('--WD', default=0.01, type=int, help='Weight decay of the model')
 parser.add_argument('--best_metric', default="average f1", type=str, help='What metric should be evaluated against for MTL/baseline performance?')
+parser.add_argument('--zero_shot_label', default="", type=str, help='What label should the zero-shot comparison be made against?')
 parser.add_argument('--random_state', default=42, type=int, help='Random state of the experiment (default 42)')
 parser.add_argument('--output_text', type=bool, nargs='?', const=True, default=False, help="Outputs text of the experiment results")
 parser.add_argument('--cpu', type=bool, nargs='?', const=True, default=False, help="Uses CPU for processing")
@@ -38,6 +40,7 @@ PARAMS = Parameters(dataset_name_list = dataset_list,
                     num_epochs = args.num_epochs,
                     num_fine_tuning_epochs = args.num_fine_tuning_epochs,
                     best_metric = args.best_metric,
+                    zero_shot_label = args.zero_shot_label,
                     random_state = args.random_state,
                     cpu= args.cpu)
 
@@ -47,6 +50,11 @@ logger.create_experiment(PARAMS)
 task_builder = TaskBuilder(random_state=PARAMS.random_state)
 
 task_dict = task_builder.build_tasks(dataset_list, PARAMS)
+
+# Run classical zero-shot learning on all datasets
+if len(PARAMS.zero_shot_label) > 0:
+    baseline_models = BaselineModels()
+    baseline_models.get_zero_shot_baselines(task_dict)
 
 # Log some useful data that is pertinent when reviewing results of training
 for task_name, task in task_dict.items():

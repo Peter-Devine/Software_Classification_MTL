@@ -12,6 +12,7 @@ class Parameters:
                 num_epochs,
                 num_fine_tuning_epochs,
                 best_metric,
+                zero_shot_label,
                 random_state,
                 cpu):
         self.dataset_name_list = dataset_name_list
@@ -26,5 +27,6 @@ class Parameters:
         self.num_epochs = num_epochs
         self.num_fine_tuning_epochs = num_fine_tuning_epochs
         self.best_metric = best_metric
+        self.zero_shot_label = zero_shot_label
         self.random_state = random_state
         self.cpu = cpu

@@ -13,8 +13,7 @@ from functools import partial
 import time
 
 class BaselineModels:
-    def __init__(self, is_multilabel):
-        self.is_multilabel = is_multilabel
+    def __init__(self):
         self.model_dict = {
             "Gaussian NB": GaussianNB,
             "Complement NB": ComplementNB,
@@ -32,10 +31,36 @@ class BaselineModels:
             "recall": recall_score
         }
 
-    # TODO: Get Zero shot baslines
-    # def get_zero_shot_baselines(self, list_of_datasets, best_metric="f1"):
-    #     for input_train_df, input_valid_df, input_test_df in list_of_datasets:
-    #         best_per_label_results, per_label_results = self.get_baselines(input_train_df, input_valid_df, input_test_df, best_metric)
+    def get_zero_shot_baselines(self, task_dict, best_metric, zero_shot_label):
+        zero_shot_results = {}
+        for task_name, task in task_dict.items():
+            zero_shot_results[task_name] = {}
+            for test_task_name, test_task in task_dict.items():
+                if task.is_multilabel:
+                    label_column_names = [x for x in task.columns if zero_shot_label in x.lower()]
+                    assert len(label_column_names) == 1, f"Not exactly one column name that corresponds to zero shot label {zero_shot_label} ({task.columns})"
+                    label_column_names = label_column_names[0]
+                    train_df_labels = task.train_df[label_column_name].apply(lambda x: True if x else False)
+                    valid_df_labels = task.valid_df[label_column_name].apply(lambda x: True if x else False)
+                else:
+                    assert any([zero_shot_label in x.lower() for x in task.train_df.labels.unique()]), f"Zero shot label, {zero_shot_label}, not in dataset (Vals: {task.train_df.labels.unique()})"
+                    train_df_labels = task.train_df.labels.apply(lambda x: True if zero_shot_label in x.lower() else False)
+                    valid_df_labels = task.valid_df.labels.apply(lambda x: True if zero_shot_label in x.lower() else False)
+
+                if test_task.is_multilabel:
+                    label_column_name = [x for x in test_task.test_df.columns if zero_shot_label in x.lower()][0]
+                    test_df_labels = test_task.test_df[label_column_name].apply(lambda x: True if x else False)
+                else:
+                    test_df_labels = test_task.test_df.labels.apply(lambda x: True if zero_shot_label in x.lower() else False)
+
+                train_df = pd.DataFrame({"text": task.train_df.text, "baseline_label": train_df_labels})
+                valid_df = pd.DataFrame({"text": task.valid_df.text, "baseline_label": valid_df_labels})
+                test_df = pd.DataFrame({"text": test_task.test_df.text, "baseline_label": test_df_labels})
+
+                best_results, results = get_results_on_binary_task(train_df, valid_df, test_df, is_multilabel=False, best_metric=best_metric)
+                zero_shot_results[task_name][test_task_name] = best_results
+
+        return zero_shot_results
 
     def get_results_on_binary_task(self, train_df, valid_df, test_df, best_metric, multiclass=False):
 
@@ -137,12 +162,12 @@ class BaselineModels:
         return best_results, results
 
 
-    def get_baselines(self, input_train_df, input_valid_df, input_test_df, best_metric):
+    def get_baselines(self, input_train_df, input_valid_df, input_test_df, best_metric, is_multilabel):
 
         per_label_results = {}
         best_per_label_results = {}
 
-        if self.is_multilabel:
+        if is_multilabel:
             for column in [x for x in input_train_df.columns if "label_" in x]:
                 input_train_df["baseline_label"] = input_train_df[column]
                 input_valid_df["baseline_label"] = input_valid_df[column]
