@@ -4,6 +4,7 @@ from parameters import Parameters
 from ml_training import train_on_tasks
 from logger import NeptuneLogger
 from baseline import BaselineModels
+from zero_shot import LMZeroShot
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_list', required=True, type=str, help='Comma separated list of datasets (E.g. "maalej_2015,chen_2014_swiftkey,ciurumelea_2017_fine"). No spaces between datasets.')
@@ -84,5 +85,11 @@ if PARAMS.num_fine_tuning_epochs > 0:
             f.write( str(ft_task_eval_metrics) )
         with open("./ft_task_test_metrics.txt","w") as f:
             f.write( str(ft_task_test_metrics) )
+
+if len(PARAMS.zero_shot_label) > 0:
+    lm_zero_shot = LMZeroShot()
+    lm_zero_shot_results = lm_zero_shot.run_zero_shot_eval(task_dict, PARAMS)
+    lm_zero_shot_results
+    logger.log_dict("LM zero shot", "", lm_zero_shot_results)
 
 logger.stop()
