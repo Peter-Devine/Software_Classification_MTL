@@ -52,19 +52,24 @@ task_builder = TaskBuilder(random_state=PARAMS.random_state)
 
 task_dict = task_builder.build_tasks(dataset_list, PARAMS)
 
+# Log some useful data that is pertinent when reviewing results of training
+for task_name, task in task_dict.items():
+    logger.log_dict("label map", task.label_map, task_name)
+    logger.log_dict("task metadata", task.data_info, task_name)
+    logger.log_dict("best baselines", task.best_baseline_values, task_name)
+    logger.log_dict("all baselines", task.all_baseline_values, task_name)
+
 # Run classical zero-shot learning on all datasets
 if len(PARAMS.zero_shot_label) > 0:
     baseline_models = BaselineModels()
-    baseline_models.get_zero_shot_baselines(task_dict)
+    zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
+    mtl_results = baseline_models.get_MTL_baselines(task_dict, PARAMS.best_metric, PARAMS.zero_shot_label, is_zero_shot=False)
+    mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, PARAMS.best_metric, PARAMS.zero_shot_label, is_zero_shot=True)
+    logger.log_dict("Zero shot results (classical)", zero_shot_results)
+    logger.log_dict("MTL results (classical)", mtl_results)
+    logger.log_dict("Zero shot MTL results (classical)", mtl_zero_shot_results)
 
-# Log some useful data that is pertinent when reviewing results of training
-for task_name, task in task_dict.items():
-    logger.log_dict("label map", task_name, task.label_map)
-    logger.log_dict("task metadata", task_name, task.data_info)
-    logger.log_dict("best baselines", task_name, task.best_baseline_values)
-    logger.log_dict("all baselines", task_name, task.all_baseline_values)
-
-#Do multi-task learning if more than one task is supplied
+# Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1 and PARAMS.num_epochs > 0:
     task_eval_metrics, task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=False)
 
@@ -89,7 +94,6 @@ if PARAMS.num_fine_tuning_epochs > 0:
 if len(PARAMS.zero_shot_label) > 0:
     lm_zero_shot = LMZeroShot()
     lm_zero_shot_results = lm_zero_shot.run_zero_shot_eval(task_dict, PARAMS)
-    lm_zero_shot_results
-    logger.log_dict("LM zero shot", "", lm_zero_shot_results)
+    logger.log_dict("LM zero shot", lm_zero_shot_results)
 
 logger.stop()

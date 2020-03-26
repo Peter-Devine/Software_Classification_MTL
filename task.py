@@ -22,11 +22,11 @@ class Task:
         # E.g. if dataset A has 10 batches and dataset B has 100 batches, we want to train our model on dataset B 10 times more frequently as dataset A
         self.train_length = ceil(train.shape[0] / PARAMS.batch_size_train)
 
-        # Get the baseline model results for the task
-        self.best_baseline_values, self.all_baseline_values = self.get_baselines(train, valid, test, best_metric=PARAMS.best_metric)
-
         # Convert these dataframes into tensor datasets, with inputs (token ids) and labels (integers for multi-class, one-hot vectors for multi-label), as well as the mappings of these values to real labels. We also scrape a bunch of useful data of the datasets to compare them in later MTL tasks
         self.train_data, self.valid_data, self.test_data, self.label_map = self.get_tensor_dataset(train, valid, test, PARAMS)
+
+        # Get the baseline model results for the task
+        self.best_baseline_values, self.all_baseline_values = self.get_baselines(self.train_df, self.valid_df, self.test_df, best_metric=PARAMS.best_metric)
 
         # Make a training_iterable variable whereupon the dataset can be iterated over, not necessarily in a loop. This is needed for multi-task learning where batches of different tasks will generally be mixed.
         self.training_iterable = iter(self.train_data)
