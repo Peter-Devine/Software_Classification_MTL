@@ -31,27 +31,33 @@ class BaselineModels:
             "recall": recall_score
         }
 
+    def get_in_domain_MTL_baselines(self, train_task_dict, best_metric, zero_shot_label):
+        return self.get_MTL_baselines(self, train_task_dict, train_task_dict, best_metric, zero_shot_label, is_zero_shot=False)
+
     # Gets the zero-shot ability of classical models trained on all datasets save one
     # If is_zero_shot, we train the model on all tasks's combined train/validation set (except one) and test on another task's test set
     # If not is_zero_shot, then we train the model on all the tasks combined datasets, and then we test on each task's test set
-    def get_MTL_baselines(self, all_task_dict, best_metric, zero_shot_label, is_zero_shot):
+    def get_MTL_baselines(self, train_task_dict, test_task_dict, best_metric, zero_shot_label, is_zero_shot):
         zero_shot_mtl_results = {}
 
         # Iterate over all tasks as our test tasks
-        for test_task_name, test_task in all_task_dict.items():
-            # If is_zero_shot, we take our test task's training set out of the training task dict
-            if is_zero_shot:
-                train_task_dict = dict(all_task_dict)
-                del train_task_dict[test_task_name]
-            # Else, we include all training tasks in combined training set
-            else:
-                train_task_dict = all_task_dict
+        for test_task_name, test_task in test_task_dict.items():
+            train_task_dict_temp = dict(train_task_dict)
+
+            # Remove test task's training set from training dataset if zero-shot evaluation
+            if is_zero_shot and test_task_name in train_task_dict_temp.keys():
+                del train_task_dict_temp[test_task_name]
 
             train_mtl_df = None
             valid_mtl_df = None
 
+            # Combine all training datasets into one big binary dataset
             train_mtl_df, valid_mtl_df = self.combine_task_datasets(self, train_task_dict, zero_shot_label)
+
+            # Get the test set
             test_mtl_df = self.create_zero_shot_df(test_task.train_df, zero_shot_label, test_task.is_multilabel, training=False)
+
+            # Get results on test set using model trained on training set and selected on validation set
             best_results, results = self.get_baseline_results(train_mtl_df, valid_mtl_df, test_mtl_df, best_metric=best_metric, multiclass=False)
             zero_shot_mtl_results[test_task_name] = best_results
 
@@ -98,11 +104,11 @@ class BaselineModels:
     # Gets the zero-shot ability of classical models trained on a given dataset
     # We train the model on one task's train/validation set and test on another task's test set
     # We then map both dataset's label sets to a given label (E.g. Bug/ No bug) as a list of booleans
-    def get_zero_shot_baselines(self, task_dict, best_metric, zero_shot_label):
+    def get_zero_shot_baselines(self, train_task_dict, test_task_dict, best_metric, zero_shot_label):
         zero_shot_results = {}
-        for task_name, task in task_dict.items():
+        for task_name, task in train_task_dict.items():
             zero_shot_results[task_name] = {}
-            for test_task_name, test_task in task_dict.items():
+            for test_task_name, test_task in test_task_dict.items():
                 train_df = self.create_zero_shot_df(task.train_df, zero_shot_label, task.is_multilabel, training=True)
                 valid_df = self.create_zero_shot_df(task.valid_df, zero_shot_label, task.is_multilabel, training=False)
                 test_df = self.create_zero_shot_df(test_task.test_df, zero_shot_label, test_task.is_multilabel, training=False)
@@ -119,11 +125,13 @@ class BaselineModels:
         tfidf_vectorizer = TfidfTransformer()
 
         def transform_text(train, valid, test, is_idf):
+            # Get BOW features for each split
             train_feat = bow_vectorizer.fit_transform(train.text).toarray()
             valid_feat = bow_vectorizer.transform(valid.text).toarray()
             test_feat = bow_vectorizer.transform(test.text).toarray()
 
             if is_idf:
+                # Convert BOW features into TFIDF features
                 train_feat = tfidf_vectorizer.fit_transform(train_feat).toarray()
                 valid_feat = tfidf_vectorizer.transform(valid_feat).toarray()
                 test_feat = tfidf_vectorizer.transform(test_feat).toarray()
@@ -226,6 +234,7 @@ class BaselineModels:
 
                 best_per_label_results[column], per_label_results[column] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric)
         else:
+            # Make multiclass label set by simply copying labels to our temporary baseline_label column
             input_train_df["baseline_label"] = input_train_df["label"]
             input_valid_df["baseline_label"] = input_valid_df["label"]
             input_test_df["baseline_label"] = input_test_df["label"]
@@ -234,6 +243,7 @@ class BaselineModels:
             # Only do binary models if the labels are not already binary
             if len(input_test_df["label"].unique()) > 2:
                 for label in input_train_df.label.unique():
+                    # Make binary label set by making a boolean list of whether the label set is a given label or not
                     input_train_df["baseline_label"] = input_train_df["label"] == label
                     input_valid_df["baseline_label"] = input_valid_df["label"] == label
                     input_test_df["baseline_label"] = input_test_df["label"] == label

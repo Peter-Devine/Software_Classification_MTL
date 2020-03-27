@@ -68,12 +68,12 @@ class LMZeroShot:
 
         return eval_engine
 
-    def run_zero_shot_eval(self, task_dict, PARAMS):
+    def run_zero_shot_eval(self, task_dict, test_task_dict, PARAMS):
         lm_zero_shot_results = {}
 
         #Iterate over all tasks, and then iterate over each task within each task to compare zero-shot performance across each.
         for task_name, task in task_dict.items():
-            for test_task_name, test_task in task_dict.items():
+            for test_task_name, test_task in test_task_dict.items():
                 zero_shot_eval_engine = self.create_zero_shot_eval_engine(task.model, PARAMS.zero_shot_label, task.label_map, test_task.label_map, PARAMS.cpu)
 
                 lm_zero_shot_results[task_name][test_task_name] = zero_shot_eval_engine.run(test_task.test_data).metrics

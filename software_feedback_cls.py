@@ -8,6 +8,7 @@ from zero_shot import LMZeroShot
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_list', required=True, type=str, help='Comma separated list of datasets (E.g. "maalej_2015,chen_2014_swiftkey,ciurumelea_2017_fine"). No spaces between datasets.')
+parser.add_argument('--zero_shot_dataset_list', default="", type=str, help='Comma separated list of datasets on which to do zero-shot eval (E.g. "maalej_2015,chen_2014_swiftkey,ciurumelea_2017_fine"). No spaces between datasets.')
 parser.add_argument('--model_name', default="bert-base-uncased", type=str, help='Name of the language model to use (See https://huggingface.co/transformers/pretrained_models.html for all possible models)')
 parser.add_argument('--max_length', default=128, type=int, help='Maximum sequence length for input')
 parser.add_argument('--num_epochs', default=40, type=int, help='Number of epochs to train the model for')
@@ -28,6 +29,7 @@ parser.add_argument('--neptune_username', default="", type=str, help=' (Optional
 args = parser.parse_args()
 print(f"Inputted args are:\n{args}")
 dataset_list = args.dataset_list.split(",")
+test_dataset_list = args.zero_shot_dataset_list.split(",") if len(args.zero_shot_dataset_list)>0 else []
 
 PARAMS = Parameters(dataset_name_list = dataset_list,
                     lm_model_name = args.model_name,
@@ -52,6 +54,15 @@ task_builder = TaskBuilder(random_state=PARAMS.random_state)
 
 task_dict = task_builder.build_tasks(dataset_list, PARAMS)
 
+# Create the test_task_dict for zero-shot evaluation if we have been supplied test tasks
+if len(test_dataset_list) > 0:
+    # If we already have a task created in the task_dict, it makes sense to just copy that task into the test_task_dict instead of creating a new task (saves on memory)
+    already_created_tasks = [x for x in test_dataset_list if x in task_dict.keys()]
+    not_already_created_tasks = [x for x in test_dataset_list if x not in task_dict.keys()]
+    test_task_dict = task_builder.build_tasks(not_already_created_tasks, PARAMS)
+    copied_test_tasks = {test_task_name: task_dict[test_task_name] for test_task_name in already_created_tasks}
+    test_task_dict.update(copied_test_tasks)
+
 # Log some useful data that is pertinent when reviewing results of training
 for task_name, task in task_dict.items():
     logger.log_dict("label map", task.label_map, task_name)
@@ -62,15 +73,18 @@ for task_name, task in task_dict.items():
 # Run classical zero-shot learning on all datasets
 if len(PARAMS.zero_shot_label) > 0:
     baseline_models = BaselineModels()
-    zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
-    mtl_results = baseline_models.get_MTL_baselines(task_dict, PARAMS.best_metric, PARAMS.zero_shot_label, is_zero_shot=False)
-    mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, PARAMS.best_metric, PARAMS.zero_shot_label, is_zero_shot=True)
+    mtl_results = baseline_models.get_in_domain_MTL_baselines(task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
     logger.log_dict("Zero shot results (classical)", zero_shot_results)
-    logger.log_dict("MTL results (classical)", mtl_results)
-    logger.log_dict("Zero shot MTL results (classical)", mtl_zero_shot_results)
+
+    # If we have a designated set of test tasks, the run out of domain (zero shot) evaluation on classical models
+    if len(test_task_dict.keys()) > 0:
+        zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
+        mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label, is_zero_shot=True)
+        logger.log_dict("MTL results (classical)", mtl_results)
+        logger.log_dict("Zero shot MTL results (classical)", mtl_zero_shot_results)
 
 # Do multi-task learning if more than one task is supplied
-if len(dataset_list) > 1 and PARAMS.num_epochs > 0:
+if len(dataset_list) > 1:
     task_eval_metrics, task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=False)
 
     if args.output_text:
@@ -80,20 +94,20 @@ if len(dataset_list) > 1 and PARAMS.num_epochs > 0:
         with open("./task_test_metrics.txt","w") as f:
             f.write( str(task_test_metrics) )
 
-if PARAMS.num_fine_tuning_epochs > 0:
-    # Fine tune on each task individually
-    ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
+# Fine tune on each task individually
+ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
 
-    if args.output_text:
-        # Output final results to disk
-        with open("./ft_task_eval_metrics.txt","w") as f:
-            f.write( str(ft_task_eval_metrics) )
-        with open("./ft_task_test_metrics.txt","w") as f:
-            f.write( str(ft_task_test_metrics) )
+if args.output_text:
+    # Output final results to disk
+    with open("./ft_task_eval_metrics.txt","w") as f:
+        f.write( str(ft_task_eval_metrics) )
+    with open("./ft_task_test_metrics.txt","w") as f:
+        f.write( str(ft_task_test_metrics) )
 
-if len(PARAMS.zero_shot_label) > 0:
+# If we have test tasks and a label with which to compare them, then we run zero-shot evaluation
+if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
     lm_zero_shot = LMZeroShot()
-    lm_zero_shot_results = lm_zero_shot.run_zero_shot_eval(task_dict, PARAMS)
+    lm_zero_shot_results = lm_zero_shot.run_zero_shot_eval(task_dict, test_task_dict, PARAMS)
     logger.log_dict("LM zero shot", lm_zero_shot_results)
 
 logger.stop()
