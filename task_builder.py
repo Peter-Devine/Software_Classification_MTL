@@ -244,7 +244,7 @@ class TaskBuilder:
         # Cycle through all the app files and add the review text and labels to the overall dataframe
         all_review_df = None
         for file_name in os.listdir(file_dir):
-            with open(os.path.join(file_dir, file_name), "r") as f:
+            with open(os.path.join(file_dir, file_name), "rb") as f:
                 data = f.read()
                 all_review_df = add_data_to_df(data, all_review_df)
 
