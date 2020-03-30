@@ -70,18 +70,14 @@ for task_name, task in task_dict.items():
     logger.log_dict("best baselines", task.best_baseline_values, task_name)
     logger.log_dict("all baselines", task.all_baseline_values, task_name)
 
-# Run classical zero-shot learning on all datasets
-if len(PARAMS.zero_shot_label) > 0:
+# Run classical zero-shot learning on all datasets if we have a designated set of test tasks, the run out of domain (zero shot) evaluation on classical models
+if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
     baseline_models = BaselineModels()
-    mtl_results = baseline_models.get_in_domain_MTL_baselines(task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
-    logger.log_dict("Zero shot results (classical)", zero_shot_results)
 
-    # If we have a designated set of test tasks, the run out of domain (zero shot) evaluation on classical models
-    if len(test_task_dict.keys()) > 0:
-        zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
-        mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label, is_zero_shot=True)
-        logger.log_dict("MTL results (classical)", mtl_results)
-        logger.log_dict("Zero shot MTL results (classical)", mtl_zero_shot_results)
+    zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
+    mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
+    logger.log_dict("Zero shot results (classical)", zero_shot_results)
+    logger.log_dict("MTL results (classical)", mtl_zero_shot_results)
 
 # Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:

@@ -31,35 +31,25 @@ class BaselineModels:
             "recall": recall_score
         }
 
-    def get_in_domain_MTL_baselines(self, train_task_dict, best_metric, zero_shot_label):
-        return self.get_MTL_baselines(self, train_task_dict, train_task_dict, best_metric, zero_shot_label, is_zero_shot=False)
-
     # Gets the zero-shot ability of classical models trained on all datasets save one
     # If is_zero_shot, we train the model on all tasks's combined train/validation set (except one) and test on another task's test set
     # If not is_zero_shot, then we train the model on all the tasks combined datasets, and then we test on each task's test set
-    def get_MTL_baselines(self, train_task_dict, test_task_dict, best_metric, zero_shot_label, is_zero_shot):
+    def get_MTL_baselines(self, train_task_dict, test_task_dict, best_metric, zero_shot_label):
         zero_shot_mtl_results = {}
+
+        # Combine all training datasets into one big binary dataset
+        train_mtl_df, valid_mtl_df = self.combine_task_datasets(self, train_task_dict, zero_shot_label)
+
+        best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_mtl_df, valid_df=valid_mtl_df, test_df=None, is_multilabel=False)
 
         # Iterate over all tasks as our test tasks
         for test_task_name, test_task in test_task_dict.items():
-            train_task_dict_temp = dict(train_task_dict)
-
-            # Remove test task's training set from training dataset if zero-shot evaluation
-            if is_zero_shot and test_task_name in train_task_dict_temp.keys():
-                del train_task_dict_temp[test_task_name]
-
-            train_mtl_df = None
-            valid_mtl_df = None
-
-            # Combine all training datasets into one big binary dataset
-            train_mtl_df, valid_mtl_df = self.combine_task_datasets(self, train_task_dict, zero_shot_label)
 
             # Get the test set
             test_mtl_df = self.create_zero_shot_df(test_task.train_df, zero_shot_label, test_task.is_multilabel, training=False)
 
             # Get results on test set using model trained on training set and selected on validation set
-            best_results, results = self.get_baseline_results(train_mtl_df, valid_mtl_df, test_mtl_df, best_metric=best_metric, multiclass=False)
-            zero_shot_mtl_results[test_task_name] = best_results
+            zero_shot_mtl_results[test_task_name] = self.get_zero_shot_result_given_model(train_mtl_df, valid_mtl_df, test_mtl_df, best_results)
 
         return zero_shot_mtl_results
 
@@ -108,38 +98,76 @@ class BaselineModels:
         zero_shot_results = {}
         for task_name, task in train_task_dict.items():
             zero_shot_results[task_name] = {}
+            train_df = self.create_zero_shot_df(task.train_df, zero_shot_label, task.is_multilabel, training=True)
+            valid_df = self.create_zero_shot_df(task.valid_df, zero_shot_label, task.is_multilabel, training=False)
+            best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_df, valid_df=valid_df, test_df=None, is_multilabel=False)
+
             for test_task_name, test_task in test_task_dict.items():
-                train_df = self.create_zero_shot_df(task.train_df, zero_shot_label, task.is_multilabel, training=True)
-                valid_df = self.create_zero_shot_df(task.valid_df, zero_shot_label, task.is_multilabel, training=False)
                 test_df = self.create_zero_shot_df(test_task.test_df, zero_shot_label, test_task.is_multilabel, training=False)
 
-                best_results, results = self.get_baseline_results(train_df, valid_df, test_df, is_multilabel=False, best_metric=best_metric)
-                zero_shot_results[task_name][test_task_name] = best_results
+                zero_shot_results[task_name][test_task_name] = self.get_zero_shot_result_given_model(train_df, valid_df, test_df, best_results)
 
         return zero_shot_results
 
+    def get_zero_shot_result_given_model(train_df, valid_df, test_df, best_results):
+        is_best_model_tfidf = best_results["best config"]["input type"] == "tfidf"
+        train_X, valid_X, test_X = self.transform_text(train_df, valid_df, test_df, is_idf=is_best_model_tfidf)
 
-    def get_baseline_results(self, train_df, valid_df, test_df, best_metric, multiclass=False):
+        best_model = best_results["best model"]
+        test_preds = best_model.predict(test_X)
+
+        zero_shot_result = self.get_metrics_from_preds(test_df.baseline_label, test_preds, is_multiclass=False)
+        return zero_shot_result
+
+    def get_metrics_from_preds(self, golds, preds, is_multiclass):
+        metrics_results = {}
+        for metric_name, metric_fn in self.metrics.items():
+            per_model_results[metric_name] = {}
+
+            # If we are doing multiclass classification, then we want the f1 score for all classes.
+            # If we are doing binary, then we do not want the 0 and the 1 f1 score, just the 1 f1 score.
+            if metric_name in ["f1", "precision", "recall"]:
+                if not is_multiclass:
+                    applied_metric_fn = partial(metric_fn, average="binary")
+                else:
+                    applied_metric_fn = partial(metric_fn, average=None)
+            else:
+                applied_metric_fn = metric_fn
+
+            if is_multiclass:
+                score = applied_metric_fn(binarizer.transform(golds), binarizer.transform(preds))
+            else:
+                score = applied_metric_fn(golds, preds)
+
+            metrics_results[metric_name] = score
+
+        return metrics_results
+
+    def transform_text(self, train, valid, test, is_idf):
+        # Get BOW features for each split
+        train_feat = bow_vectorizer.fit_transform(train.text).toarray()
+        valid_feat = bow_vectorizer.transform(valid.text).toarray()
+        if test is not None:
+            test_feat = bow_vectorizer.transform(test.text).toarray()
+        else:
+            test_feat = None
+
+        if is_idf:
+            # Convert BOW features into TFIDF features
+            train_feat = tfidf_vectorizer.fit_transform(train_feat).toarray()
+            valid_feat = tfidf_vectorizer.transform(valid_feat).toarray()
+            if test is not None:
+                test_feat = tfidf_vectorizer.transform(test_feat).toarray()
+
+        return train_feat, valid_feat, test_feat
+
+    def get_baseline_results(self, best_metric, train_df, valid_df, test_df=None, is_multiclass=False):
 
         bow_vectorizer = CountVectorizer()
         tfidf_vectorizer = TfidfTransformer()
 
-        def transform_text(train, valid, test, is_idf):
-            # Get BOW features for each split
-            train_feat = bow_vectorizer.fit_transform(train.text).toarray()
-            valid_feat = bow_vectorizer.transform(valid.text).toarray()
-            test_feat = bow_vectorizer.transform(test.text).toarray()
-
-            if is_idf:
-                # Convert BOW features into TFIDF features
-                train_feat = tfidf_vectorizer.fit_transform(train_feat).toarray()
-                valid_feat = tfidf_vectorizer.transform(valid_feat).toarray()
-                test_feat = tfidf_vectorizer.transform(test_feat).toarray()
-
-            return train_feat, valid_feat, test_feat
-
-        bow_splits = transform_text(train_df, valid_df, test_df, is_idf=False)
-        tfidf_splits = transform_text(train_df, valid_df, test_df, is_idf=True)
+        bow_splits = self.transform_text(train_df, valid_df, test_df, is_idf=False)
+        tfidf_splits = self.transform_text(train_df, valid_df, test_df, is_idf=True)
 
         input_types = {
             "bow": bow_splits,
@@ -156,7 +184,7 @@ class BaselineModels:
 
         # If we are doing a multiclass baseline, then we need to know which labels are referred to by which columns in our prec, rec, f1 output
         # We fit an sklearn binarizer on the training data and output the mappings of these classes to our results output
-        if multiclass:
+        if is_multiclass:
             binarizer = LabelBinarizer()
             binarizer.fit(train_df.baseline_label)
             results["multiclass label map"] = binarizer.classes_
@@ -178,37 +206,19 @@ class BaselineModels:
                 model = model_class()
                 model.fit(train, train_df.baseline_label)
                 valid_preds = model.predict(valid)
-                test_preds = model.predict(test)
+                if test is not None:
+                    test_preds = model.predict(test)
 
                 per_model_results = {}
-                for metric_name, metric_fn in self.metrics.items():
-                    per_model_results[metric_name] = {}
+                valid_results = self.get_metrics_from_preds(valid_df.baseline_label, valid_preds, is_multiclass)
+                if test is not None:
+                    test_results = self.get_metrics_from_preds(test_df.baseline_label, test_preds, is_multiclass)
 
-                    # If we are doing multiclass classification, then we want the f1 score for all classes.
-                    # If we are doing binary, then we do not want the 0 and the 1 f1 score, just the 1 f1 score.
-                    if metric_name in ["f1", "precision", "recall"]:
-                        if not multiclass:
-                            applied_metric_fn = partial(metric_fn, average="binary")
-                        else:
-                            applied_metric_fn = partial(metric_fn, average=None)
-                    else:
-                        applied_metric_fn = metric_fn
-
-                    if multiclass:
-                        valid_score = applied_metric_fn(binarizer.transform(valid_df.baseline_label), binarizer.transform(valid_preds))
-                        test_score = applied_metric_fn(binarizer.transform(test_df.baseline_label), binarizer.transform(test_preds))
-                    else:
-                        valid_score = applied_metric_fn(valid_df.baseline_label, valid_preds)
-                        test_score = applied_metric_fn(test_df.baseline_label, test_preds)
-
-                    per_model_results[metric_name]["valid"] = valid_score
-                    per_model_results[metric_name]["test"] = test_score
-
-                    if metric_name == best_metric:
-                        if best_score is None or valid_score > best_score:
-                            best_score = valid_score
-                            best_model = model
-                            best_config = (input_type_name, model_name)
+                valid_score = valid_results[best_metric]
+                if best_score is None or valid_score > best_score:
+                    best_score = valid_score
+                    best_model = model
+                    best_config = {"input type": input_type_name, "model name": model_name}
 
                 results[input_type_name][model_name] = per_model_results
 
