@@ -42,7 +42,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     # Start clock before training to measure how long it takes to find a validated best model
     train_time_start = time.clock()
 
-    # Save initial model before training starts
+    # Save initial model before training starts (overwriting any previous models that may have been on disc)
     for task_name, task in task_dict.items():
         model_saver.save_model(file_name=task_name, model=task.model)
 
