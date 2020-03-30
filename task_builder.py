@@ -223,7 +223,7 @@ class TaskBuilder:
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(path=task_data_path)
 
-        file_dir = os.path.join(task_data_path, "SURF-SURF-v.1.0", "panichella-SURF-29332ec", "SURF_replication_package", "Experiment I", "summaries")
+        file_dir = os.path.join(task_data_path, "panichella-SURF-29332ec", "SURF_replication_package", "Experiment I", "summaries")
 
         def add_data_to_df(data, df):
             soup = BeautifulSoup(data, 'html.parser')
