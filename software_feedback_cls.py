@@ -24,6 +24,7 @@ parser.add_argument('--zero_shot_label', default="", type=str, help='What label 
 parser.add_argument('--random_state', default=42, type=int, help='Random state of the experiment (default 42)')
 parser.add_argument('--output_text', type=bool, nargs='?', const=True, default=False, help="Outputs text of the experiment results")
 parser.add_argument('--cpu', type=bool, nargs='?', const=True, default=False, help="Uses CPU for processing")
+parser.add_argument('--do_classical', type=bool, nargs='?', const=True, default=False, help="Train classical models for comparison?")
 parser.add_argument('--neptune_username', default="", type=str, help=' (Optional) For outputting training/eval metrics to neptune.ai. Valid neptune username. Not your neptune.ai API key must also be stored as $NEPTUNE_API_TOKEN environment variable.')
 
 args = parser.parse_args()
@@ -67,17 +68,21 @@ if len(test_dataset_list) > 0:
 for task_name, task in task_dict.items():
     logger.log_dict("label map", task.label_map, task_name)
     logger.log_dict("task metadata", task.data_info, task_name)
-    logger.log_dict("best baselines", task.best_baseline_values, task_name)
-    logger.log_dict("all baselines", task.all_baseline_values, task_name)
 
-# Run classical zero-shot learning on all datasets if we have a designated set of test tasks, the run out of domain (zero shot) evaluation on classical models
-if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
+if args.do_classical:
+    # Do per-task in-domain training and evaluation first
     baseline_models = BaselineModels()
+    for task_name, task in task_dict.items():
+        best_classical_result, all_classical_results = baseline_models.get_baselines(task.train_df, task.valid_df, task.test_df, best_metric=PARAMS.best_metric)
+        logger.log_dict("best baselines", best_classical_result, task_name)
+        logger.log_dict("all baselines", all_classical_results, task_name)
 
-    zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
-    mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
-    logger.log_dict("Zero shot results (classical)", zero_shot_results)
-    logger.log_dict("MTL results (classical)", mtl_zero_shot_results)
+    # Run classical zero-shot learning on all datasets if we have a designated set of test tasks, the run out of domain (zero shot) evaluation on classical models
+    if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
+        zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
+        mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
+        logger.log_dict("Zero shot results (classical)", zero_shot_results)
+        logger.log_dict("MTL results (classical)", mtl_zero_shot_results)
 
 # Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:

@@ -25,9 +25,6 @@ class Task:
         # Convert these dataframes into tensor datasets, with inputs (token ids) and labels (integers for multi-class, one-hot vectors for multi-label), as well as the mappings of these values to real labels. We also scrape a bunch of useful data of the datasets to compare them in later MTL tasks
         self.train_data, self.valid_data, self.test_data, self.label_map = self.get_tensor_dataset(train, valid, test, PARAMS)
 
-        # Get the baseline model results for the task
-        self.best_baseline_values, self.all_baseline_values = self.get_baselines(self.train_df, self.valid_df, self.test_df, best_metric=PARAMS.best_metric)
-
         # Make a training_iterable variable whereupon the dataset can be iterated over, not necessarily in a loop. This is needed for multi-task learning where batches of different tasks will generally be mixed.
         self.training_iterable = iter(self.train_data)
 
@@ -50,12 +47,6 @@ class Task:
             tensors_and_map = get_multiclass_dataset_from_df(train_tensor_dataset, valid_tensor_dataset, test_tensor_dataset, PARAMS)
 
         return tensors_and_map
-
-    def get_baselines(self, train, valid, test, best_metric):
-        # Get the baseline model results for the task
-        baseline_models = BaselineModels()
-        best_baseline_values, all_baseline_values = baseline_models.get_baselines(train, valid, test, best_metric, self.is_multilabel)
-        return best_baseline_values, all_baseline_values
 
     def get_loss_function(self):
         if self.is_multilabel:
