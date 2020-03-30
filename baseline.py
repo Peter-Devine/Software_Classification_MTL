@@ -191,6 +191,8 @@ class BaselineModels:
                             applied_metric_fn = partial(metric_fn, average="binary")
                         else:
                             applied_metric_fn = partial(metric_fn, average=None)
+                    else:
+                        applied_metric_fn = metric_fn
 
                     if multiclass:
                         valid_score = applied_metric_fn(binarizer.transform(valid_df.baseline_label), binarizer.transform(valid_preds))
