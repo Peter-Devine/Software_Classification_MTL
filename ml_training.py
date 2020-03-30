@@ -40,7 +40,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
         return is_fine_tuning and epochs_since_last_best[task_name] >= PARAMS.early_stopping_patience
 
     # Start clock before training to measure how long it takes to find a validated best model
-    train_time_start = time.clock()
+    train_time_start = time.time()
 
     # Save initial model before training starts (overwriting any previous models that may have been on disc)
     for task_name, task in task_dict.items():
@@ -110,7 +110,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
                 epochs_since_last_best[task_name] += 1
             task_eval_metrics[task_name].append(comparison_metric)
 
-    train_time_end = time.clock()
+    train_time_end = time.time()
 
     task_eval_metrics["time_elapsed"] = train_time_end - train_time_start
 

@@ -163,7 +163,7 @@ class BaselineModels:
             best_results["multiclass label map"] = binarizer.classes_
 
         # Start a clock before iterating through all types of data and model types to measure time taken to find best model
-        train_time_start = time.clock()
+        train_time_start = time.time()
 
         # Iterate through all input types (bag-of-words and TFIDF)
         for input_type_name, (train, valid, test) in input_types.items():
@@ -209,7 +209,7 @@ class BaselineModels:
 
                 results[input_type_name][model_name] = per_model_results
 
-        train_time_end = time.clock()
+        train_time_end = time.time()
 
         best_results.update({
             "best score": best_score,
