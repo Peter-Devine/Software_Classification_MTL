@@ -186,10 +186,11 @@ class BaselineModels:
 
                     # If we are doing multiclass classification, then we want the f1 score for all classes.
                     # If we are doing binary, then we do not want the 0 and the 1 f1 score, just the 1 f1 score.
-                    if metric_name in ["f1", "precision", "recall"] and not multiclass:
-                        applied_metric_fn = partial(metric_fn, average="binary")
-                    else:
-                        applied_metric_fn = partial(metric_fn, average=None)
+                    if metric_name in ["f1", "precision", "recall"]:
+                        if not multiclass:
+                            applied_metric_fn = partial(metric_fn, average="binary")
+                        else:
+                            applied_metric_fn = partial(metric_fn, average=None)
 
                     if multiclass:
                         valid_score = applied_metric_fn(binarizer.transform(valid_df.baseline_label), binarizer.transform(valid_preds))
