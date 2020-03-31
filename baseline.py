@@ -40,7 +40,7 @@ class BaselineModels:
         # Combine all training datasets into one big binary dataset
         train_mtl_df, valid_mtl_df = self.combine_task_datasets(self, train_task_dict, zero_shot_label)
 
-        best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_mtl_df, valid_df=valid_mtl_df, test_df=None, is_multilabel=False)
+        best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_mtl_df, valid_df=valid_mtl_df, test_df=None, is_multiclass=False)
 
         # Iterate over all tasks as our test tasks
         for test_task_name, test_task in test_task_dict.items():
@@ -100,7 +100,7 @@ class BaselineModels:
             zero_shot_results[task_name] = {}
             train_df = self.create_zero_shot_df(task.train_df, zero_shot_label, task.is_multilabel, training=True)
             valid_df = self.create_zero_shot_df(task.valid_df, zero_shot_label, task.is_multilabel, training=False)
-            best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_df, valid_df=valid_df, test_df=None, is_multilabel=False)
+            best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_df, valid_df=valid_df, test_df=None, is_multiclass=False)
 
             for test_task_name, test_task in test_task_dict.items():
                 test_df = self.create_zero_shot_df(test_task.test_df, zero_shot_label, test_task.is_multilabel, training=False)
@@ -245,13 +245,13 @@ class BaselineModels:
                 input_valid_df["baseline_label"] = input_valid_df[column]
                 input_test_df["baseline_label"] = input_test_df[column]
 
-                best_per_label_results[column], per_label_results[column] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric)
+                best_per_label_results[column], per_label_results[column] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric, is_multiclass=False)
         else:
             # Make multiclass label set by simply copying labels to our temporary baseline_label column
             input_train_df["baseline_label"] = input_train_df["label"]
             input_valid_df["baseline_label"] = input_valid_df["label"]
             input_test_df["baseline_label"] = input_test_df["label"]
-            best_per_label_results["multiclass"], per_label_results["multiclass"] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric, multiclass=True)
+            best_per_label_results["multiclass"], per_label_results["multiclass"] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric, is_multiclass=True)
 
             # Only do binary models if the labels are not already binary
             if len(input_test_df["label"].unique()) > 2:
@@ -261,6 +261,6 @@ class BaselineModels:
                     input_valid_df["baseline_label"] = input_valid_df["label"] == label
                     input_test_df["baseline_label"] = input_test_df["label"] == label
 
-                    best_per_label_results[label], per_label_results[label] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric)
+                    best_per_label_results[label], per_label_results[label] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric, is_multiclass=False)
 
         return best_per_label_results, per_label_results
