@@ -119,7 +119,7 @@ class BaselineModels:
         zero_shot_result = self.get_metrics_from_preds(test_df.baseline_label, test_preds, is_multiclass=False)
         return zero_shot_result
 
-    def get_metrics_from_preds(self, golds, preds, is_multiclass):
+    def get_metrics_from_preds(self, golds, preds, is_multiclass, binarizer=None):
         metrics_results = {}
         for metric_name, metric_fn in self.metrics.items():
 
@@ -134,6 +134,7 @@ class BaselineModels:
                 applied_metric_fn = metric_fn
 
             if is_multiclass:
+                assert binarizer is not None, "Multiclass metrics requested without binarizer passed."
                 score = applied_metric_fn(binarizer.transform(golds), binarizer.transform(preds))
             else:
                 score = applied_metric_fn(golds, preds)
@@ -188,6 +189,8 @@ class BaselineModels:
             binarizer.fit(train_df.baseline_label)
             results["multiclass label map"] = binarizer.classes_
             best_results["multiclass label map"] = binarizer.classes_
+        else:
+            binarizer = None
 
         # Start a clock before iterating through all types of data and model types to measure time taken to find best model
         train_time_start = time.time()
@@ -209,9 +212,9 @@ class BaselineModels:
                     test_preds = model.predict(test)
 
                 per_model_results = {}
-                valid_results = self.get_metrics_from_preds(valid_df.baseline_label, valid_preds, is_multiclass)
+                valid_results = self.get_metrics_from_preds(valid_df.baseline_label, valid_preds, is_multiclass, binarizer=binarizer)
                 if test is not None:
-                    test_results = self.get_metrics_from_preds(test_df.baseline_label, test_preds, is_multiclass)
+                    test_results = self.get_metrics_from_preds(test_df.baseline_label, test_preds, is_multiclass, binarizer=binarizer)
 
                 valid_score = valid_results[best_metric]
                 if best_score is None or valid_score > best_score:
