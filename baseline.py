@@ -85,8 +85,8 @@ class BaselineModels:
         else:
             # Only check if there are any positive labels in train set (I.e. not valid/test set) as without positive labels we cannot train
             if training:
-                assert any([zero_shot_label in x.lower() for x in df.labels.unique()]), f"Zero shot label, {zero_shot_label}, not in dataset (Vals: {df.labels.unique()})"
-            df_labels = df.labels.apply(lambda x: True if zero_shot_label in x.lower() else False)
+                assert any([zero_shot_label in x.lower() for x in df.label.unique()]), f"Zero shot label, {zero_shot_label}, not in dataset (Vals: {df.label.unique()})"
+            df_labels = df.label.apply(lambda x: True if zero_shot_label in x.lower() else False)
 
         zero_shot_df = pd.DataFrame({"text": df.text, "baseline_label": df_labels})
         return zero_shot_df
