@@ -146,7 +146,7 @@ class BaselineModels:
     def transform_text(self, train, valid, test, is_idf):
         bow_vectorizer = CountVectorizer()
         tfidf_vectorizer = TfidfTransformer()
-        
+
         # Get BOW features for each split
         train_feat = bow_vectorizer.fit_transform(train.text).toarray()
         valid_feat = bow_vectorizer.transform(valid.text).toarray()
@@ -245,13 +245,13 @@ class BaselineModels:
                 input_valid_df["baseline_label"] = input_valid_df[column]
                 input_test_df["baseline_label"] = input_test_df[column]
 
-                best_per_label_results[column], per_label_results[column] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric, is_multiclass=False)
+                best_per_label_results[column], per_label_results[column] = self.get_baseline_results(best_metric=best_metric, train_df=input_train_df, valid_df=input_valid_df, test_df=input_test_df, is_multiclass=False)
         else:
             # Make multiclass label set by simply copying labels to our temporary baseline_label column
             input_train_df["baseline_label"] = input_train_df["label"]
             input_valid_df["baseline_label"] = input_valid_df["label"]
             input_test_df["baseline_label"] = input_test_df["label"]
-            best_per_label_results["multiclass"], per_label_results["multiclass"] = self.get_baseline_results(input_train_df, input_valid_df, input_test_df, best_metric, is_multiclass=True)
+            best_per_label_results["multiclass"], per_label_results["multiclass"] = self.get_baseline_results(best_metric=best_metric, train_df=input_train_df, valid_df=input_valid_df, test_df=input_test_df, is_multiclass=True)
 
             # Only do binary models if the labels are not already binary
             if len(input_test_df["label"].unique()) > 2:
