@@ -9,6 +9,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
+import pandas as pd
 from functools import partial
 import time
 
