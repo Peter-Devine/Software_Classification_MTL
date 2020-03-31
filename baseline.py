@@ -122,7 +122,6 @@ class BaselineModels:
     def get_metrics_from_preds(self, golds, preds, is_multiclass):
         metrics_results = {}
         for metric_name, metric_fn in self.metrics.items():
-            per_model_results[metric_name] = {}
 
             # If we are doing multiclass classification, then we want the f1 score for all classes.
             # If we are doing binary, then we do not want the 0 and the 1 f1 score, just the 1 f1 score.
