@@ -144,6 +144,9 @@ class BaselineModels:
         return metrics_results
 
     def transform_text(self, train, valid, test, is_idf):
+        bow_vectorizer = CountVectorizer()
+        tfidf_vectorizer = TfidfTransformer()
+        
         # Get BOW features for each split
         train_feat = bow_vectorizer.fit_transform(train.text).toarray()
         valid_feat = bow_vectorizer.transform(valid.text).toarray()
@@ -162,9 +165,6 @@ class BaselineModels:
         return train_feat, valid_feat, test_feat
 
     def get_baseline_results(self, best_metric, train_df, valid_df, test_df=None, is_multiclass=False):
-
-        bow_vectorizer = CountVectorizer()
-        tfidf_vectorizer = TfidfTransformer()
 
         bow_splits = self.transform_text(train_df, valid_df, test_df, is_idf=False)
         tfidf_splits = self.transform_text(train_df, valid_df, test_df, is_idf=True)
