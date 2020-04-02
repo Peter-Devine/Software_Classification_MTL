@@ -39,7 +39,7 @@ class BaselineModels:
         zero_shot_mtl_results = {}
 
         # Combine all training datasets into one big binary dataset
-        train_mtl_df, valid_mtl_df = self.combine_task_datasets(self, train_task_dict, zero_shot_label)
+        train_mtl_df, valid_mtl_df = self.combine_task_datasets(train_task_dict, zero_shot_label)
 
         best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_mtl_df, valid_df=valid_mtl_df, test_df=None, is_multiclass=False)
 
@@ -110,7 +110,7 @@ class BaselineModels:
 
         return zero_shot_results
 
-    def get_zero_shot_result_given_model(train_df, valid_df, test_df, best_results):
+    def get_zero_shot_result_given_model(self, train_df, valid_df, test_df, best_results):
         is_best_model_tfidf = best_results["best config"]["input type"] == "tfidf"
         train_X, valid_X, test_X = self.transform_text(train_df, valid_df, test_df, is_idf=is_best_model_tfidf)
 
