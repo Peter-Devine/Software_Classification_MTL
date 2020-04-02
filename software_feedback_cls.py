@@ -60,7 +60,7 @@ if len(test_dataset_list) > 0:
     # If we already have a task created in the task_dict, it makes sense to just copy that task into the test_task_dict instead of creating a new task (saves on memory)
     already_created_tasks = [x for x in test_dataset_list if x in task_dict.keys()]
     not_already_created_tasks = [x for x in test_dataset_list if x not in task_dict.keys()]
-    test_task_dict = task_builder.build_tasks(not_already_created_tasks, PARAMS)
+    test_task_dict = task_builder.build_tasks(not_already_created_tasks, PARAMS, is_test_tasks=True)
     copied_test_tasks = {test_task_name: task_dict[test_task_name] for test_task_name in already_created_tasks}
     test_task_dict.update(copied_test_tasks)
 
