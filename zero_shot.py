@@ -14,9 +14,11 @@ class LMZeroShot:
     # We also find which integers align with which labels in the label encodings
     def create_zero_shot_eval_engine(self, model, zero_shot_label, model_mapping, label_mapping, cpu):
 
+        # Iterate through all labels in both the train and test sets to see which labels correspond to the zero shot label (the unifying label)
         model_target_int = [int for label, int in model_mapping.items() if zero_shot_label in label.lower()]
         label_target_int = [int for label, int in label_mapping.items() if zero_shot_label in label.lower()]
 
+        # There should only be one unifying label in each dataset (Possible TODO: Allow multiple labels to map to one unifying label)
         assert len(model_target_int) == 1, f"Ambiguous or empty model label list when trying to map {zero_shot_label} to {model_target_int}"
         assert len(label_target_int) == 1, f"Ambiguous or empty gold label list when trying to map {zero_shot_label} to {model_target_int}"
 
@@ -29,13 +31,18 @@ class LMZeroShot:
             # gold = y.cuda()
             if cpu:
                 pred = model(X.cpu())
+                # Get the argmax of the raw model output (logits)
+                _, pred = pred.max(1)
                 gold = y.cpu()
             else:
+
                 pred = model(X.cuda())
+                # # Get the argmax of the raw model output (logits)
+                _, pred = pred.max(1)
                 gold = y.cuda()
 
-            pred = pred == model_target_int
-            gold = gold == label_target_int
+            pred = (pred == model_target_int).long()
+            gold = (gold == label_target_int).long()
 
             return pred, gold
 
@@ -47,24 +54,19 @@ class LMZeroShot:
         recall.attach(eval_engine, "recall")
         precision = Precision()
         precision.attach(eval_engine, "precision")
-        confusion_matrix = ConfusionMatrix(num_classes=2)
-        confusion_matrix.attach(eval_engine, "confusion_matrix")
-        f1 = (precision * recall * 2 / (precision + recall))
-        f1.attach(eval_engine, "f1")
-        f2 = (precision * recall * 5 / ((4*precision) + recall))
-        f2.attach(eval_engine, "f2")
+        # f1 = (precision * recall * 2 / (precision + recall))
+        # f1.attach(eval_engine, "f1")
+        # f2 = (precision * recall * 5 / ((4*precision) + recall))
+        # f2.attach(eval_engine, "f2")
 
         avg_recall = Recall(average=True)
         avg_recall.attach(eval_engine, "average recall")
         avg_precision = Precision(average=True)
         avg_precision.attach(eval_engine, "average precision")
-        avg_f1 = (avg_precision * avg_recall * 2 / (avg_precision + avg_recall))
-        avg_f1.attach(eval_engine, "average f1")
-        avg_f2 = (precision * recall * 5 / ((4*precision) + recall))
-        avg_f2.attach(eval_engine, "average f2")
-
-        top_k = TopK(k=10, label_idx_of_interest=0)
-        top_k.attach(eval_engine, "top_k")
+        # avg_f1 = (avg_precision * avg_recall * 2 / (avg_precision + avg_recall))
+        # avg_f1.attach(eval_engine, "average f1")
+        # avg_f2 = (avg_precision * avg_recall * 5 / ((4*avg_precision) + avg_recall))
+        # avg_f2.attach(eval_engine, "average f2")
 
         return eval_engine
 
@@ -73,6 +75,7 @@ class LMZeroShot:
 
         #Iterate over all tasks, and then iterate over each task within each task to compare zero-shot performance across each.
         for task_name, task in task_dict.items():
+            lm_zero_shot_results[task_name] = {}
             for test_task_name, test_task in test_task_dict.items():
                 zero_shot_eval_engine = self.create_zero_shot_eval_engine(task.model, PARAMS.zero_shot_label, task.label_map, test_task.label_map, PARAMS.cpu)
 
