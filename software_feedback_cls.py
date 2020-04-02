@@ -12,9 +12,9 @@ parser.add_argument('--zero_shot_dataset_list', default="", type=str, help='Comm
 parser.add_argument('--model_name', default="bert-base-uncased", type=str, help='Name of the language model to use (See https://huggingface.co/transformers/pretrained_models.html for all possible models)')
 parser.add_argument('--max_length', default=128, type=int, help='Maximum sequence length for input')
 parser.add_argument('--num_epochs', default=40, type=int, help='Number of epochs to train the model for')
+parser.add_argument('--num_fine_tuning_epochs', default=40, type=int, help='Number of epochs to fine tune the model for')
 parser.add_argument('--batch_size_train', default=64, type=int, help='Number of epochs to train the model for')
 parser.add_argument('--batch_size_eval', default=32, type=int, help='Number of epochs to train the model for')
-parser.add_argument('--num_fine_tuning_epochs', default=40, type=int, help='Number of epochs to fine tune the model for')
 parser.add_argument('--early_stopping_patience', default=20, type=int, help='How many epochs to wait before stopping training after validation performance peak')
 parser.add_argument('--LR', default=5e-5, type=int, help='Learning rate for the model')
 parser.add_argument('--EPS', default=1e-6, type=int, help='Epsilon of the model')
@@ -83,6 +83,8 @@ if args.do_classical:
         mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
         logger.log_dict("Zero shot results (classical)", zero_shot_results)
         logger.log_dict("MTL results (classical)", mtl_zero_shot_results)
+
+    del baseline_models, best_classical_result, all_classical_results, zero_shot_results, mtl_zero_shot_results
 
 # Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:
