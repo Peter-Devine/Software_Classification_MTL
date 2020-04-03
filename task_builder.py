@@ -27,9 +27,9 @@ class TaskBuilder:
 
         # If we are only doing inference over these tasks, we do not need a model, or shared language model
         if is_test_tasks:
-            language_model = get_language_model(PARAMS.lm_model_name)
-        else:
             language_model = None
+        else:
+            language_model = get_language_model(PARAMS.lm_model_name)
 
         for dataset_name in names_of_datasets:
             target_task_dict[dataset_name] = self.task_dict[dataset_name].build_task(language_model, PARAMS, is_test_tasks)
