@@ -214,8 +214,11 @@ class BaselineModels:
 
                 per_model_results = {}
                 valid_results = self.get_metrics_from_preds(valid_df.baseline_label, valid_preds, is_multiclass, binarizer=binarizer)
+                per_model_results["valid"] = valid_results
                 if test is not None:
                     test_results = self.get_metrics_from_preds(test_df.baseline_label, test_preds, is_multiclass, binarizer=binarizer)
+                    per_model_results["test"] = test_results
+
 
                 valid_score = valid_results[best_metric]
                 if best_score is None or valid_score > best_score:
