@@ -24,6 +24,7 @@ class BaselineModels:
             "Support vector classifier": SVC,
             "Gradient boosting classifier": GradientBoostingClassifier
         }
+
         self.metrics = {
             "accuracy": accuracy_score,
             "f1": f1_score,
@@ -102,7 +103,7 @@ class BaselineModels:
             valid_df = self.create_zero_shot_df(task.valid_df, zero_shot_label, task.is_multilabel, training=False)
             best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_df, valid_df=valid_df, test_df=None, is_multiclass=False)
 
-            # Store the pre-evaluation model config, metrics etc. in the results 
+            # Store the pre-evaluation model config, metrics etc. in the results
             zero_shot_results[task_name] = best_results
 
             for test_task_name, test_task in test_task_dict.items():
@@ -181,7 +182,7 @@ class BaselineModels:
 
         # Save the best metric, model and configuration (model name and input type) based on the validation score
         best_score = None
-        test_score = None
+        all_best_metrics = None
         best_model = None
         best_config = None
         best_results = {}
@@ -230,9 +231,10 @@ class BaselineModels:
                     # Save the score of the best model
                     best_score = valid_score
 
-                    # Save test score associated with the best model if available
+                    # Save all valid and test score metrics associated with the best model if available
+                    all_best_metrics = {"valid results best: ": valid_score[best_metric]}
                     if test is not None:
-                        test_score = test_results[best_metric]
+                        all_best_metrics["test results best: "] = test_results[best_metric]
 
                     # Save the best model for future use
                     best_model = model
@@ -244,7 +246,7 @@ class BaselineModels:
 
         best_results.update({
             "best score": best_score,
-            "test score": test_score,
+            "all best metrics": all_best_metrics,
             "best model": best_model,
             "best config": best_config,
             "time taken to achieve": train_time_end - train_time_start
