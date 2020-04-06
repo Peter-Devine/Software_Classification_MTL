@@ -102,7 +102,7 @@ class BaselineModels:
             valid_df = self.create_zero_shot_df(task.valid_df, zero_shot_label, task.is_multilabel, training=False)
             best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_df, valid_df=valid_df, test_df=None, is_multiclass=False)
 
-            # Store the pre-
+            # Store the pre-evaluation model config, metrics etc. in the results 
             zero_shot_results[task_name] = best_results
 
             for test_task_name, test_task in test_task_dict.items():
