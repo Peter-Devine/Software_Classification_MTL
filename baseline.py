@@ -232,9 +232,9 @@ class BaselineModels:
                     best_score = valid_score
 
                     # Save all valid and test score metrics associated with the best model if available
-                    all_best_metrics = {"valid results best: ": valid_score[best_metric]}
+                    all_best_metrics = {"valid results best: ": valid_results}
                     if test is not None:
-                        all_best_metrics["test results best: "] = test_results[best_metric]
+                        all_best_metrics["test results best: "] = test_results
 
                     # Save the best model for future use
                     best_model = model
