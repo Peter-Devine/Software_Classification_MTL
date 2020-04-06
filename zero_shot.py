@@ -63,10 +63,10 @@ class LMZeroShot:
         avg_recall.attach(eval_engine, "average recall")
         avg_precision = Precision(average=True)
         avg_precision.attach(eval_engine, "average precision")
-        # avg_f1 = (avg_precision * avg_recall * 2 / (avg_precision + avg_recall))
-        # avg_f1.attach(eval_engine, "average f1")
-        # avg_f2 = (avg_precision * avg_recall * 5 / ((4*avg_precision) + avg_recall))
-        # avg_f2.attach(eval_engine, "average f2")
+        avg_f1 = (avg_precision * avg_recall * 2 / (avg_precision + avg_recall))
+        avg_f1.attach(eval_engine, "average f1")
+        avg_f2 = (avg_precision * avg_recall * 5 / ((4*avg_precision) + avg_recall))
+        avg_f2.attach(eval_engine, "average f2")
 
         return eval_engine
 

@@ -98,10 +98,12 @@ class BaselineModels:
     def get_zero_shot_baselines(self, train_task_dict, test_task_dict, best_metric, zero_shot_label):
         zero_shot_results = {}
         for task_name, task in train_task_dict.items():
-            zero_shot_results[task_name] = {}
             train_df = self.create_zero_shot_df(task.train_df, zero_shot_label, task.is_multilabel, training=True)
             valid_df = self.create_zero_shot_df(task.valid_df, zero_shot_label, task.is_multilabel, training=False)
             best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_df, valid_df=valid_df, test_df=None, is_multiclass=False)
+
+            # Store the pre-
+            zero_shot_results[task_name] = best_results
 
             for test_task_name, test_task in test_task_dict.items():
                 test_df = self.create_zero_shot_df(test_task.test_df, zero_shot_label, test_task.is_multilabel, training=False)
@@ -179,6 +181,7 @@ class BaselineModels:
 
         # Save the best metric, model and configuration (model name and input type) based on the validation score
         best_score = None
+        test_score = None
         best_model = None
         best_config = None
         best_results = {}
@@ -219,10 +222,19 @@ class BaselineModels:
                     test_results = self.get_metrics_from_preds(test_df.baseline_label, test_preds, is_multiclass, binarizer=binarizer)
                     per_model_results["test"] = test_results
 
-
+                # Find the score used to select the best model based on the best_metric
                 valid_score = valid_results[best_metric]
+
                 if best_score is None or valid_score > best_score:
+
+                    # Save the score of the best model
                     best_score = valid_score
+
+                    # Save test score associated with the best model if available
+                    if test is not None:
+                        test_score = test_results[best_metric]
+
+                    # Save the best model for future use
                     best_model = model
                     best_config = {"input type": input_type_name, "model name": model_name}
 
@@ -232,6 +244,7 @@ class BaselineModels:
 
         best_results.update({
             "best score": best_score,
+            "test score": test_score,
             "best model": best_model,
             "best config": best_config,
             "time taken to achieve": train_time_end - train_time_start
