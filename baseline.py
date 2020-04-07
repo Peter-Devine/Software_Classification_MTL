@@ -266,7 +266,10 @@ class BaselineModels:
                 input_valid_df["baseline_label"] = input_valid_df[column]
                 input_test_df["baseline_label"] = input_test_df[column]
 
-                best_per_label_results[column], per_label_results[column] = self.get_baseline_results(best_metric=best_metric, train_df=input_train_df, valid_df=input_valid_df, test_df=input_test_df, is_multiclass=False)
+                # Just optimize over binary f1 instead of average for binary classification
+                binary_best_metric = best_metric.replace("average ", "")
+
+                best_per_label_results[column], per_label_results[column] = self.get_baseline_results(best_metric=binary_best_metric, train_df=input_train_df, valid_df=input_valid_df, test_df=input_test_df, is_multiclass=False)
         else:
             # Make multiclass label set by simply copying labels to our temporary baseline_label column
             input_train_df["baseline_label"] = input_train_df["label"]
@@ -282,6 +285,9 @@ class BaselineModels:
                     input_valid_df["baseline_label"] = input_valid_df["label"] == label
                     input_test_df["baseline_label"] = input_test_df["label"] == label
 
-                    best_per_label_results[label], per_label_results[label] = self.get_baseline_results(best_metric=best_metric, train_df=input_train_df, valid_df=input_valid_df, test_df=input_test_df, is_multiclass=False)
+                    # Just optimize over binary f1 instead of average for binary classification
+                    binary_best_metric = best_metric.replace("average ", "")
+
+                    best_per_label_results[label], per_label_results[label] = self.get_baseline_results(best_metric=binary_best_metric, train_df=input_train_df, valid_df=input_valid_df, test_df=input_test_df, is_multiclass=False)
 
         return best_per_label_results, per_label_results
