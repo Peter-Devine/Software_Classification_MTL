@@ -8,12 +8,13 @@ class TaskBuilder:
     def __init__(self, random_state):
         self.random_state = random_state
         self.task_dict = {
-            "maalej_2015": Task(data_getter_fn=self.get_maalej_2015, is_multilabel=False),
-            "maalej_2015_bug_bin": Task(data_getter_fn=self.get_maalej_2015_bug_bin, is_multilabel=False),
-            "maalej_2015_rating_bin": Task(data_getter_fn=self.get_maalej_2015_rating_bin, is_multilabel=False),
-            "maalej_2015_feature_bin": Task(data_getter_fn=self.get_maalej_2015_feature_bin, is_multilabel=False),
-            "maalej_2015_user_bin": Task(data_getter_fn=self.get_maalej_2015_user_bin, is_multilabel=False),
-            "maalej_2015_user_bin_multilabel": Task(data_getter_fn=self.get_maalej_2015_user_bin_multilabel, is_multilabel=True),
+            "maalej_2016": Task(data_getter_fn=self.get_maalej_2016, is_multilabel=False),
+            # "maalej_2016_bug_bin": Task(data_getter_fn=self.get_maalej_2016_bug_bin, is_multilabel=False),
+            # "maalej_2016_rating_bin": Task(data_getter_fn=self.get_maalej_2016_rating_bin, is_multilabel=False),
+            # "maalej_2016_feature_bin": Task(data_getter_fn=self.get_maalej_2016_feature_bin, is_multilabel=False),
+            # "maalej_2016_user_bin": Task(data_getter_fn=self.get_maalej_2016_user_bin, is_multilabel=False),
+            # "maalej_2016_user_bin_multilabel": Task(data_getter_fn=self.get_maalej_2016_user_bin_multilabel, is_multilabel=True),
+            "williams_2017": Task(data_getter_fn=self.get_williams_2017, is_multilabel=False),
             "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False),
             "ciurumelea_2017_fine": Task(data_getter_fn=self.get_ciurumelea_2017_fine, is_multilabel=True),
             "ciurumelea_2017_coarse": Task(data_getter_fn=self.get_ciurumelea_2017_coarse, is_multilabel=True),
@@ -38,8 +39,8 @@ class TaskBuilder:
 
     ######### INDIVIDUAL DATA GETTERS ############
 
-    def get_maalej_2015(self):
-        task_data_path = os.path.join(self.data_path, "maalej_2015")
+    def get_maalej_2016(self):
+        task_data_path = os.path.join(self.data_path, "maalej_2016")
         # from https://mast.informatik.uni-hamburg.de/wp-content/uploads/2015/06/review_classification_preprint.pdf
         # Bug Report, Feature Request, or Simply Praise? On Automatically Classifying App Reviews
         zip_file_path = os.path.join(task_data_path, "REJ_data.zip")
@@ -59,18 +60,15 @@ class TaskBuilder:
             "Title: " + x["title"] + " Comment: " + x["comment"] if x["title"] is not None else "Comment: " + x[
                 "comment"] for x in data], "label": [x["label"] for x in data]})
 
-        print(df.label.unique())
+        train_and_val = df.sample(frac=0.8, random_state=self.random_state)
+        train = train_and_val.sample(frac=0.7, random_state=self.random_state)
+        val = train_and_val.drop(train.index)
+        test = df.drop(train_and_val.index)
 
-        train_val_idx = df.sample(frac=0.7, random_state=self.random_state).index
-        test_idx = df.drop(train_val_idx).index
-        train_idx = df.loc[train_val_idx].sample(frac=0.85, random_state=self.random_state).index
-        valid_idx = df.loc[train_val_idx].drop(train_idx).index
+        return train, val, test
 
-        return df.loc[train_idx], df.loc[valid_idx], df.loc[test_idx]
-
-
-    def get_maalej_2015_bin(self, label):
-        train, dev, test = self.get_maalej_2015()
+    def get_maalej_2016_bin(self, label):
+        train, dev, test = self.get_maalej_2016()
 
         train["label"] = train.label.apply(lambda x: x if x==label else f"No{label}")
         dev["label"] = dev.label.apply(lambda x: x if x==label else f"No{label}")
@@ -78,20 +76,20 @@ class TaskBuilder:
 
         return train, dev, test
 
-    def get_maalej_2015_bug_bin(self):
-        return self.get_maalej_2015_bin("Bug")
+    def get_maalej_2016_bug_bin(self):
+        return self.get_maalej_2016_bin("Bug")
 
-    def get_maalej_2015_rating_bin(self):
-        return self.get_maalej_2015_bin("Rating")
+    def get_maalej_2016_rating_bin(self):
+        return self.get_maalej_2016_bin("Rating")
 
-    def get_maalej_2015_feature_bin(self):
-        return self.get_maalej_2015_bin("Feature")
+    def get_maalej_2016_feature_bin(self):
+        return self.get_maalej_2016_bin("Feature")
 
-    def get_maalej_2015_user_bin(self):
-        return self.get_maalej_2015_bin("UserExperience")
+    def get_maalej_2016_user_bin(self):
+        return self.get_maalej_2016_bin("UserExperience")
 
-    def get_maalej_2015_user_bin_multilabel(self):
-        train, dev, test = self.get_maalej_2015_bin("UserExperience")
+    def get_maalej_2016_user_bin_multilabel(self):
+        train, dev, test = self.get_maalej_2016_bin("UserExperience")
         train.rename(columns={'label': 'label_user'}, inplace=True)
         dev.rename(columns={'label': 'label_user'}, inplace=True)
         test.rename(columns={'label': 'label_user'}, inplace=True)
@@ -100,6 +98,64 @@ class TaskBuilder:
         dev["label_user"] = dev["label_user"] == "UserExperience"
         test["label_user"] = test["label_user"] == "UserExperience"
         return train, dev, test
+
+    def get_williams_2017(self):
+        task_data_path = os.path.join(".", "williams_2017")
+        # from
+        # Mining Twitter feeds for software user requirements.
+        zip_file_path = os.path.join(task_data_path, "re17.zip")
+        if not os.path.exists(zip_file_path):
+            r = requests.get("http://seel.cse.lsu.edu/data/re17.zip")
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            z.extractall(path = task_data_path)
+
+        file_path = os.path.join(task_data_path, "RE17", "tweets_full_dataset.dat")
+
+        with open(file_path, "r", encoding='ISO-8859-1') as f:
+            data = f.read()
+
+        table = pd.read_table(StringIO("\n".join(data.split("\n")[16:])), names=["text_data"])
+
+        pos = table["text_data"].apply(lambda x: x.split(",")[0])
+        neg = table["text_data"].apply(lambda x: x.split(",")[1])
+        feedback_class = table["text_data"].apply(lambda x: x.split(",")[2])
+        content = table["text_data"].apply(lambda x: ",".join(x.split(",")[3:-10]).strip("\"") if len(x.split(",")) >= 10 else None)
+        feedback_ids = table["text_data"].apply(lambda x: x.split(",")[-10])
+        n_favorites = table["text_data"].apply(lambda x: x.split(",")[-9])
+        n_followers = table["text_data"].apply(lambda x: x.split(",")[-8])
+        n_friends = table["text_data"].apply(lambda x: x.split(",")[-7])
+        n_statuses = table["text_data"].apply(lambda x: x.split(",")[-6])
+        n_listed = table["text_data"].apply(lambda x: x.split(",")[-5])
+        verified = table["text_data"].apply(lambda x: x.split(",")[-4])
+        timezone = table["text_data"].apply(lambda x: x.split(",")[-3])
+        is_reply = table["text_data"].apply(lambda x: x.split(",")[-2])
+        date_posted = table["text_data"].apply(lambda x: x.split(",")[-1])
+
+        df = pd.DataFrame({
+            "pos": pos,
+            "neg": neg,
+            "labels": feedback_class,
+            "text": content,
+            "feedback_ids": feedback_ids,
+            "n_favorites": n_favorites,
+            "n_followers": n_followers,
+            "n_friends": n_friends,
+            "n_statuses": n_statuses,
+            "n_listed": n_listed,
+            "verified": verified,
+            "timezone": timezone,
+            "is_reply": is_reply,
+            "date_posted": date_posted
+        })
+
+        train_and_val = df.sample(frac=0.8, random_state=self.random_state)
+        train = train_and_val.sample(frac=0.7, random_state=self.random_state)
+        val = train_and_val.drop(train.index)
+        test = df.drop(train_and_val.index)
+
+        return train, val, test
+
+
 
     def get_chen_2014_swiftkey(self):
         task_data_path = os.path.join(self.data_path, "chen_2014")
@@ -127,8 +183,6 @@ class TaskBuilder:
 
 
         train_and_val = train_info.append(train_noninfo)
-
-        print(train_and_val.label.unique())
 
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
@@ -198,8 +252,6 @@ class TaskBuilder:
         unique_values = set()
         for column in label_columns:
             unique_values.update(df[column].unique())
-
-        print(unique_values)
 
         for unique_value in unique_values:
             if type(unique_value) == str and unique_value != "COMPATIBILTY":
