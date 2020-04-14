@@ -135,7 +135,7 @@ class TaskBuilder:
         df = pd.DataFrame({
             "pos": pos,
             "neg": neg,
-            "labels": feedback_class,
+            "label": feedback_class,
             "text": content,
             "feedback_ids": feedback_ids,
             "n_favorites": n_favorites,
