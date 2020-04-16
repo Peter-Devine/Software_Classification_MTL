@@ -370,6 +370,8 @@ class TaskBuilder:
 
             # Strip out unnecessary ' that bookends every review
             df.text = df.text.apply(lambda x: x.strip("'"))
+            # Strip the unnecessary whitespace that prepends every label
+            df.label = df.label.apply(lambda x: x.strip())
 
             return df
 
@@ -385,8 +387,14 @@ class TaskBuilder:
 
         df = df.rename(columns = {"body": "text", "category": "label"})
 
-        train_and_val = df.sample(frac=0.7, random_state=self.random_state)
-        train = train_and_val.sample(frac=0.7, random_state=self.random_state)
+        # We take out a randomly sampled one of every label to make sure that the training dataset has one label for each class
+        unique_df = df.groupby('label',as_index = False,group_keys=False).apply(lambda s: s.sample(1, random_state=42))
+        df = df.drop(unique_df.index)
+
+        train_and_val = df.sample(frac=0.7, random_state=42)
+        train = train_and_val.sample(frac=0.7, random_state=42)
         val = train_and_val.drop(train.index)
+        train = train.append(unique_df)
         test = df.drop(train_and_val.index)
+        
         return train, val, test
