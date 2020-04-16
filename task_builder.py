@@ -20,7 +20,9 @@ class TaskBuilder:
             "ciurumelea_2017_fine": Task(data_getter_fn=self.get_ciurumelea_2017_fine, is_multilabel=True),
             "ciurumelea_2017_coarse": Task(data_getter_fn=self.get_ciurumelea_2017_coarse, is_multilabel=True),
             "di_sorbo_2017": Task(data_getter_fn=self.get_di_sorbo_2017, is_multilabel=False),
-            "guzman_2015": Task(data_getter_fn=self.get_guzman_2015, is_multilabel=False)
+            "guzman_2015": Task(data_getter_fn=self.get_guzman_2015, is_multilabel=False),
+            "scalabrino_2017": Task(data_getter_fn=self.get_scalabrino_2017, is_multilabel=False),
+            "jha_2017": Task(data_getter_fn=self.get_jha_2017, is_multilabel=False),
         }
         self.data_path = "./data"
 
@@ -155,8 +157,6 @@ class TaskBuilder:
         test = df.drop(train_and_val.index)
 
         return train, val, test
-
-
 
     def get_chen_2014_swiftkey(self):
         task_data_path = os.path.join(self.data_path, "chen_2014")
@@ -344,6 +344,48 @@ class TaskBuilder:
         df["app"] = df.app.apply(lambda x: int_to_app_name_map[x])
 
         train_and_val = df.sample(frac=0.8, random_state=self.random_state)
+        train = train_and_val.sample(frac=0.7, random_state=self.random_state)
+        val = train_and_val.drop(train.index)
+        test = df.drop(train_and_val.index)
+        return train, val, test
+
+    def get_jha_2017(self):
+
+        task_data_path = os.path.join(".", "jha_2017")
+        # from https://www.springer.com/content/pdf/10.1007%2F978-3-319-54045-0.pdf
+        # Mining User Requirements from Application Store Reviews Using Frame Semantics
+        zip_file_path = os.path.join(task_data_path, "refsq17.zip")
+        if not os.path.exists(zip_file_path):
+            r = requests.get("http://seel.cse.lsu.edu/data/refsq17.zip")
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            z.extractall(path=task_data_path)
+
+        def get_jha_df(filename):
+            review_data_path = os.path.join(task_data_path, "refsq17", "refsq17", "BOW", filename)
+
+            with open(review_data_path, "r") as f:
+                text_data = f.read()
+
+            df = pd.read_csv(StringIO(text_data), names=["text", "label"])
+
+            # Strip out unnecessary ' that bookends every review
+            df.text = df.text.apply(lambda x: x.strip("'"))
+
+            return df
+
+        train_and_val = get_jha_df("BOW_training.txt")
+        train = train_and_val.sample(frac=0.7, random_state=self.random_state)
+        val = train_and_val.drop(train.index)
+        test = get_jha_df("BOW_testing.txt")
+
+        return train, val, test
+
+    def get_scalabrino_2017(self):
+        df = pd.read_csv("https://dibt.unimol.it/reports/clap/downloads/rq3-manually-classified-implemented-reviews.csv")
+
+        df = df.rename(columns = {"body": "text", "category": "label"})
+
+        train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
         test = df.drop(train_and_val.index)
