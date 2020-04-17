@@ -103,7 +103,7 @@ class TaskBuilder:
         return train, dev, test
 
     def get_williams_2017(self):
-        task_data_path = os.path.join(".", "williams_2017")
+        task_data_path = os.path.join(self.data_path, "williams_2017")
         # from
         # Mining Twitter feeds for software user requirements.
         zip_file_path = os.path.join(task_data_path, "re17.zip")
@@ -351,7 +351,7 @@ class TaskBuilder:
 
     def get_jha_2017(self):
 
-        task_data_path = os.path.join(".", "jha_2017")
+        task_data_path = os.path.join(self.data_path, "jha_2017")
         # from https://www.springer.com/content/pdf/10.1007%2F978-3-319-54045-0.pdf
         # Mining User Requirements from Application Store Reviews Using Frame Semantics
         zip_file_path = os.path.join(task_data_path, "refsq17.zip")
@@ -396,5 +396,5 @@ class TaskBuilder:
         val = train_and_val.drop(train.index)
         train = train.append(unique_df)
         test = df.drop(train_and_val.index)
-        
+
         return train, val, test
