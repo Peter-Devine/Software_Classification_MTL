@@ -425,12 +425,12 @@ class TaskBuilder:
 
         df = pd.read_csv(csv_file_location, names=["id", "unknown", "text", "feedback_type", "label"], encoding='ISO-8859-1')
 
+        # We append the string "_(BUG)" to all "DEFECT" labels so that we can search for the word "bug" in all labels when doing zero-shot evaluation
         df.label = df.label.apply(lambda x: f"{x}_(BUG)" if "defect" in x.lower() else x)
 
         train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
-        train = train.append(unique_df)
         test = df.drop(train_and_val.index)
 
         return train, val, test
