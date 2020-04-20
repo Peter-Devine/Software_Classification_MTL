@@ -10,11 +10,6 @@ class TaskBuilder:
         self.random_state = random_state
         self.task_dict = {
             "maalej_2016": Task(data_getter_fn=self.get_maalej_2016, is_multilabel=False),
-            # "maalej_2016_bug_bin": Task(data_getter_fn=self.get_maalej_2016_bug_bin, is_multilabel=False),
-            # "maalej_2016_rating_bin": Task(data_getter_fn=self.get_maalej_2016_rating_bin, is_multilabel=False),
-            # "maalej_2016_feature_bin": Task(data_getter_fn=self.get_maalej_2016_feature_bin, is_multilabel=False),
-            # "maalej_2016_user_bin": Task(data_getter_fn=self.get_maalej_2016_user_bin, is_multilabel=False),
-            # "maalej_2016_user_bin_multilabel": Task(data_getter_fn=self.get_maalej_2016_user_bin_multilabel, is_multilabel=True),
             "williams_2017": Task(data_getter_fn=self.get_williams_2017, is_multilabel=False),
             "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False),
             "ciurumelea_2017_fine": Task(data_getter_fn=self.get_ciurumelea_2017_fine, is_multilabel=True),
@@ -23,6 +18,7 @@ class TaskBuilder:
             "guzman_2015": Task(data_getter_fn=self.get_guzman_2015, is_multilabel=False),
             "scalabrino_2017": Task(data_getter_fn=self.get_scalabrino_2017, is_multilabel=False),
             "jha_2017": Task(data_getter_fn=self.get_jha_2017, is_multilabel=False),
+            "morales_ramirez_2019": Task(data_getter_fn=self.get_morales_ramirez_2019, is_multilabel=False),
         }
         self.data_path = "./data"
 
@@ -388,11 +384,51 @@ class TaskBuilder:
         df = df.rename(columns = {"body": "text", "category": "label"})
 
         # We take out a randomly sampled one of every label to make sure that the training dataset has one label for each class
-        unique_df = df.groupby('label',as_index = False,group_keys=False).apply(lambda s: s.sample(1, random_state=42))
+        unique_df = df.groupby('label',as_index = False,group_keys=False).apply(lambda s: s.sample(1, random_state=self.random_state))
         df = df.drop(unique_df.index)
 
-        train_and_val = df.sample(frac=0.7, random_state=42)
-        train = train_and_val.sample(frac=0.7, random_state=42)
+        train_and_val = df.sample(frac=0.7, random_state=self.random_state)
+        train = train_and_val.sample(frac=0.7, random_state=self.random_state)
+        val = train_and_val.drop(train.index)
+        train = train.append(unique_df)
+        test = df.drop(train_and_val.index)
+
+        return train, val, test
+
+    def get_morales_ramirez_2019(self):
+        task_data_path = os.path.join(self.data_path, "morales_ramirez_2019")
+
+        def get_confirm_token(response):
+            for key, value in response.cookies.items():
+                if key.startswith('download_warning'):
+                    return value
+
+            return None
+
+        URL = "https://docs.google.com/uc?export=download"
+
+        id_ = "1PIEAY3o1RGNiIVeASYSoKtTqRXPJxsQ6"
+
+        session = requests.Session()
+
+        response = session.get(URL, params = { 'id' : id_ }, stream = True)
+        token = get_confirm_token(response)
+
+        if token:
+            params = { 'id' : id_, 'confirm' : token }
+            r = session.get(URL, params = params, stream = True)
+
+        z = zipfile.ZipFile(io.BytesIO(r.content))
+        z.extractall(path=task_data_path)
+
+        csv_file_location = os.path.join(task_data_path, "FilteredComments3Classes01Nov2017.csv")
+
+        df = pd.read_csv(csv_file_location, names=["id", "unknown", "text", "feedback_type", "label"], encoding='ISO-8859-1')
+
+        df.label = df.label.apply(lambda x: f"{x}_(BUG)" if "defect" in x.lower() else x)
+
+        train_and_val = df.sample(frac=0.7, random_state=self.random_state)
+        train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
         train = train.append(unique_df)
         test = df.drop(train_and_val.index)
