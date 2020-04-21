@@ -494,6 +494,8 @@ class TaskBuilder:
         # Map all labels to their lower-case proper label. Mark all labels outside of the literature label set as "other".
         df.label = df.label.apply(forum_label_transformer)
 
+        df = df.rename(columns={'sentence': 'text'}, inplace=True)
+
         train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
