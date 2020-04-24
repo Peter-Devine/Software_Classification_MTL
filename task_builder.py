@@ -486,7 +486,7 @@ class TaskBuilder:
             if "limitation confirmation" in lower_label:
                 return "limitation confirmation"
             if "bug confirmation" in lower_label:
-                return "bug confirmation"
+                return "malfunction confirmation"
             if "agreeing with the request" in lower_label:
                 return "agreeing with the feature request"
             return "other"
