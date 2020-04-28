@@ -86,7 +86,8 @@ if args.do_classical:
         best_classical_result, all_classical_results = baseline_models.get_baselines(task.train_df, task.valid_df, task.test_df, best_metric=PARAMS.best_metric, is_multilabel=task.is_multilabel)
         logger.log_dict("best baselines", best_classical_result, task_name)
         if args.output_text:
-            logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_best_classical_baselines.json", json.dumps(best_classical_result) )
+            dataset_string = "__".join(dataset_list)
+            logger.write_text(f"{dataset_string}_{PARAMS.random_state}_best_classical_baselines.json", json.dumps(best_classical_result) )
 
         logger.log_dict("all baselines", all_classical_results, task_name)
 
@@ -98,8 +99,9 @@ if args.do_classical:
         logger.log_dict("MTL zero shot results (classical)", mtl_zero_shot_results)
 
         if args.output_text:
-            logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_zero_shot_classical_baselines.json", json.dumps(zero_shot_results) )
-            logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_mtl_zero_shot_classical_baselines.json", json.dumps(mtl_zero_shot_results) )
+            dataset_string = "__".join(dataset_list)
+            logger.write_text(f"{dataset_string}_{PARAMS.random_state}_zero_shot_classical_baselines.json", json.dumps(zero_shot_results) )
+            logger.write_text(f"{dataset_string}_{PARAMS.random_state}_mtl_zero_shot_classical_baselines.json", json.dumps(mtl_zero_shot_results) )
 
     del baseline_models, best_classical_result, all_classical_results, zero_shot_results, mtl_zero_shot_results
 
@@ -109,16 +111,18 @@ if len(dataset_list) > 1:
 
     if args.output_text:
         # Output final results to disk
-        logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_task_eval_metrics.json", json.dumps(task_eval_metrics) )
-        logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_task_test_metrics.json", json.dumps(task_test_metrics) )
+        dataset_string = "__".join(dataset_list)
+        logger.write_text(f"{dataset_string}_{PARAMS.random_state}_task_eval_metrics.json", json.dumps(task_eval_metrics) )
+        logger.write_text(f"{dataset_string}_{PARAMS.random_state}_task_test_metrics.json", json.dumps(task_test_metrics) )
 
 # Fine tune on each task individually
 ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
 
 if args.output_text:
     # Output final results to disk
-    logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_ft_task_eval_metrics.json", json.dumps(ft_task_eval_metrics) )
-    logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_ft_task_test_metrics.json", json.dumps(ft_task_test_metrics) )
+    dataset_string = "__".join(dataset_list)
+    logger.write_text(f"{dataset_string}_{PARAMS.random_state}_ft_task_eval_metrics.json", json.dumps(ft_task_eval_metrics) )
+    logger.write_text(f"{dataset_string}_{PARAMS.random_state}_ft_task_test_metrics.json", json.dumps(ft_task_test_metrics) )
 
 # If we have test tasks and a label with which to compare them, then we run zero-shot evaluation
 if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
@@ -126,6 +130,7 @@ if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
     lm_zero_shot_results = lm_zero_shot.run_zero_shot_eval(task_dict, test_task_dict, PARAMS)
     logger.log_dict("LM zero shot", lm_zero_shot_results)
     if args.output_text:
-        logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_zero_shot_test_metrics.json", json.dumps(lm_zero_shot_results) )
+        dataset_string = "__".join(dataset_list)
+        logger.write_text(f"{dataset_string}_{PARAMS.random_state}_zero_shot_test_metrics.json", json.dumps(lm_zero_shot_results) )
 
 logger.stop()
