@@ -69,11 +69,15 @@ if len(test_dataset_list) > 0:
     for test_task_name, test_task in test_task_dict.items():
         logger.log_dict("label map", test_task.label_map, test_task_name)
         logger.log_dict("task metadata", test_task.data_info, test_task_name)
+else:
+    test_task_dict = None
 
 # Log some useful data that is pertinent when reviewing results of training / evaluation
 for task_name, task in task_dict.items():
-    logger.log_dict("label map", task.label_map, task_name)
-    logger.log_dict("task metadata", task.data_info, task_name)
+    # Only log if the task has not been logged when iterating over the test_task_dict
+    if test_task_dict is None or task_name not in test_task_dict.keys():
+        logger.log_dict("label map", task.label_map, task_name)
+        logger.log_dict("task metadata", task.data_info, task_name)
 
 if args.do_classical:
     # Do per-task in-domain training and evaluation first
