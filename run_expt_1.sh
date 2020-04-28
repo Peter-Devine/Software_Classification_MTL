@@ -1,5 +1,5 @@
 datasets=(jha_2017 scalabrino_2017 maalej_2016 williams_2017 di_sorbo_2017 guzman_2015 tizard_2019)
-random_states=(1,2,3,4,5,6,7,8,9,10)
+random_states=(1 2 3 4 5 6 7 8 9 10)
 
 export NEPTUNE_API_TOKEN=$2
 
