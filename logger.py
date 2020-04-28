@@ -18,7 +18,8 @@ class NeptuneLogger:
             neptune.create_experiment(name="__|__".join(PARAMS.dataset_name_list),
                               params=vars(PARAMS))
         else:
-            print(f"Now outputting experimental data for the experiment with {", ".join(PARAMS.dataset_name_list)} datasets")
+            dataset_list_str = ", ".join(PARAMS.dataset_name_list)
+            print(f"Now outputting experimental data for the experiment with {dataset_list_str} datasets")
 
     def log_metric(self, metric_name, x, y):
         if self.logger_active:
