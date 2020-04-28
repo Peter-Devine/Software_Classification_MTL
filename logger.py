@@ -100,4 +100,4 @@ class NeptuneLogger:
                      # Log the read file under the filename (minus suffix)
                      self.log_dict(filename[:-5], json_data_dict)
 
-         self.stop()
+        self.stop()
