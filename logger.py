@@ -78,14 +78,14 @@ class NeptuneLogger:
             neptune.stop()
 
 
-    def log_text(self, file_name, json_dump_data):
-
+    def log_json(self, file_name, dict):
+        # Log supplied dict to a json file
 
         if not os.path.exists(self.output_dir_name):
             os.makedirs(self.output_dir_name)
 
         with open(os.path.join(self.output_dir_name, file_name),"w") as f:
-            f.write(json_dump_data)
+            json.dump(dict, f)
 
     def log_output_files(self, experiment_name):
         # Create a new meta-experiment in which to output the results of all runs of experiment
