@@ -1,7 +1,11 @@
 import neptune
+import os
+import json
 
 class NeptuneLogger:
     def __init__(self, username):
+        self.output_dir_name = "output"
+
         if len(username)>0:
             # HAVE YOUR API KEY SAVED AS AN ENV VAR $NEPTUNE_API_TOKEN (or you can provide it as a "api_token" argument below if your code is private)
             neptune.init(username + '/sandbox')
@@ -13,6 +17,8 @@ class NeptuneLogger:
         if self.logger_active:
             neptune.create_experiment(name="__|__".join(PARAMS.dataset_name_list),
                               params=vars(PARAMS))
+        else:
+            print(f"Now outputting experimental data for the experiment with {", ".join(PARAMS.dataset_name_list)} datasets")
 
     def log_metric(self, metric_name, x, y):
         if self.logger_active:
@@ -69,3 +75,29 @@ class NeptuneLogger:
     def stop(self):
         if self.logger_active:
             neptune.stop()
+
+
+    def log_text(self, file_name, json_dump_data):
+
+
+        if not os.path.exists(self.output_dir_name):
+            os.makedirs(self.output_dir_name)
+
+        with open(os.path.join(self.output_dir_name, file_name),"w") as f:
+            f.write(json_dump_data)
+
+    def log_output_files(self, experiment_name):
+        # Create a new meta-experiment in which to output the results of all runs of experiment
+        neptune.create_experiment(name=experiment_name)
+
+        # Cycle through all files in output folder, and look for only .json output files
+        for filename in os.listdir(self.output_dir_name):
+            if filename.endswith(".json"):
+                # Open json files and read into dict
+                 with open(os.path.join(self.output_dir_name, filename), "r") as f:
+                     json_data_dict = json.load(f)
+
+                     # Log the read file under the filename (minus suffix)
+                     self.log_dict(filename[:-5], json_data_dict)
+
+         self.stop()
