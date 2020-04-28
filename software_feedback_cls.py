@@ -5,6 +5,7 @@ from ml_training import train_on_tasks
 from logger import NeptuneLogger
 from baseline import BaselineModels
 from zero_shot import LMZeroShot
+import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_list', required=True, type=str, help='Comma separated list of datasets (E.g. "maalej_2016,chen_2014_swiftkey,ciurumelea_2017_fine"). No spaces between datasets.')
@@ -80,6 +81,9 @@ if args.do_classical:
     for task_name, task in task_dict.items():
         best_classical_result, all_classical_results = baseline_models.get_baselines(task.train_df, task.valid_df, task.test_df, best_metric=PARAMS.best_metric, is_multilabel=task.is_multilabel)
         logger.log_dict("best baselines", best_classical_result, task_name)
+        if args.output_text:
+            logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_best_classical_baselines.json", json.dumps(best_classical_result) )
+
         logger.log_dict("all baselines", all_classical_results, task_name)
 
     # Run classical zero-shot learning on all datasets if we have a designated set of test tasks, the run out of domain (zero shot) evaluation on classical models
@@ -87,7 +91,11 @@ if args.do_classical:
         zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
         mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
         logger.log_dict("Zero shot results (classical)", zero_shot_results)
-        logger.log_dict("MTL results (classical)", mtl_zero_shot_results)
+        logger.log_dict("MTL zero shot results (classical)", mtl_zero_shot_results)
+
+        if args.output_text:
+            logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_zero_shot_classical_baselines.json", json.dumps(zero_shot_results) )
+            logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_mtl_zero_shot_classical_baselines.json", json.dumps(mtl_zero_shot_results) )
 
     del baseline_models, best_classical_result, all_classical_results, zero_shot_results, mtl_zero_shot_results
 
@@ -97,25 +105,23 @@ if len(dataset_list) > 1:
 
     if args.output_text:
         # Output final results to disk
-        with open("./task_eval_metrics.txt","w") as f:
-            f.write( str(task_eval_metrics) )
-        with open("./task_test_metrics.txt","w") as f:
-            f.write( str(task_test_metrics) )
+        logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_task_eval_metrics.json", json.dumps(task_eval_metrics) )
+        logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_task_test_metrics.json", json.dumps(task_test_metrics) )
 
 # Fine tune on each task individually
 ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
 
 if args.output_text:
     # Output final results to disk
-    with open("./ft_task_eval_metrics.txt","w") as f:
-        f.write( str(ft_task_eval_metrics) )
-    with open("./ft_task_test_metrics.txt","w") as f:
-        f.write( str(ft_task_test_metrics) )
+    logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_ft_task_eval_metrics.json", json.dumps(ft_task_eval_metrics) )
+    logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_ft_task_test_metrics.json", json.dumps(ft_task_test_metrics) )
 
 # If we have test tasks and a label with which to compare them, then we run zero-shot evaluation
 if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
     lm_zero_shot = LMZeroShot()
     lm_zero_shot_results = lm_zero_shot.run_zero_shot_eval(task_dict, test_task_dict, PARAMS)
     logger.log_dict("LM zero shot", lm_zero_shot_results)
+    if args.output_text:
+        logger.write_text(f"{"__".join(dataset_list)}_{PARAMS.random_state}_zero_shot_test_metrics.json", json.dumps(lm_zero_shot_results) )
 
 logger.stop()
