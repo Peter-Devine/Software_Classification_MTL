@@ -5,6 +5,8 @@ export NEPTUNE_API_TOKEN=$2
 
 for dataset in ${datasets[@]}; do
 	for random_state in ${random_states[@]}; do
+					echo "Now running dataset $dataset in random state $random_state"
+
 	        python software_feedback_cls.py --dataset_list=$dataset --random_state=$random_state --output_text --num_epochs=60 --num_fine_tuning_epochs=60 --batch_size_train=24 --batch_size_eval=24 --max_length=128 --neptune_username=$1
 	done
 done
