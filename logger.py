@@ -1,6 +1,7 @@
 import neptune
 import os
 import json
+import torch
 
 class NeptuneLogger:
     def __init__(self, username):
@@ -77,9 +78,19 @@ class NeptuneLogger:
         if self.logger_active:
             neptune.stop()
 
+    def clean_dict_for_json(self, dict):
+        for key, value, in dict.items():
+            if isinstance(value, torch.Tensor):
+                dict[key] = dict[key].cpu().numpy()
+            elif isinstance(value, dict):
+                dict[key] = self.clean_dict_for_json(dict[key])
+        return dict
 
     def log_json(self, file_name, dict):
         # Log supplied dict to a json file
+
+        # Make sure that dict does not contain GPU Tensors
+        dict = self.clean_dict_for_json(dict)
 
         if not os.path.exists(self.output_dir_name):
             os.makedirs(self.output_dir_name)
