@@ -2,6 +2,7 @@ import neptune
 import os
 import json
 import torch
+import numpy as np
 
 class NeptuneLogger:
     def __init__(self, username):
@@ -81,7 +82,9 @@ class NeptuneLogger:
     def clean_dict_for_json(self, input_dict):
         for key, value, in input_dict.items():
             if isinstance(value, torch.Tensor):
-                input_dict[key] = input_dict[key].cpu().numpy()
+                input_dict[key] = input_dict[key].cpu().numpy().tolist()
+            elif isinstance(value, np.ndarray):
+                input_dict[key] = input_dict[key].tolist()
             elif isinstance(value, dict):
                 input_dict[key] = self.clean_dict_for_json(input_dict[key])
         return input_dict
