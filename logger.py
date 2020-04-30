@@ -78,13 +78,13 @@ class NeptuneLogger:
         if self.logger_active:
             neptune.stop()
 
-    def clean_dict_for_json(self, dict):
-        for key, value, in dict.items():
+    def clean_dict_for_json(self, input_dict):
+        for key, value, in input_dict.items():
             if isinstance(value, torch.Tensor):
-                dict[key] = dict[key].cpu().numpy()
+                input_dict[key] = input_dict[key].cpu().numpy()
             elif isinstance(value, dict):
-                dict[key] = self.clean_dict_for_json(dict[key])
-        return dict
+                input_dict[key] = self.clean_dict_for_json(input_dict[key])
+        return input_dict
 
     def log_json(self, file_name, dict):
         # Log supplied dict to a json file
