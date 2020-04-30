@@ -86,17 +86,17 @@ class NeptuneLogger:
                 input_dict[key] = self.clean_dict_for_json(input_dict[key])
         return input_dict
 
-    def log_json(self, file_name, dict):
+    def log_json(self, file_name, input_dict):
         # Log supplied dict to a json file
 
         # Make sure that dict does not contain GPU Tensors
-        dict = self.clean_dict_for_json(dict)
+        input_dict = self.clean_dict_for_json(input_dict)
 
         if not os.path.exists(self.output_dir_name):
             os.makedirs(self.output_dir_name)
 
         with open(os.path.join(self.output_dir_name, file_name),"w") as f:
-            json.dump(dict, f)
+            json.dump(input_dict, f)
 
     def log_output_files(self, experiment_name):
         # Create a new meta-experiment in which to output the results of all runs of experiment
