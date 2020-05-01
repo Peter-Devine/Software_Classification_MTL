@@ -101,9 +101,11 @@ class NeptuneLogger:
         with open(os.path.join(self.output_dir_name, file_name),"w") as f:
             json.dump(input_dict, f)
 
-    def log_output_files(self, experiment_name):
+    def log_output_files(self, experiment_name, experiment_number):
         # Create a new meta-experiment in which to output the results of all runs of experiment
         neptune.create_experiment(name=experiment_name)
+
+        all_results_dict = {}
 
         # Cycle through all files in output folder, and look for only .json output files
         for filename in os.listdir(self.output_dir_name):
@@ -112,7 +114,64 @@ class NeptuneLogger:
                  with open(os.path.join(self.output_dir_name, filename), "r") as f:
                      json_data_dict = json.load(f)
 
+                     all_results_dict[filename[:-5]] = json_data_dict
+
                      # Log the read file under the filename (minus suffix)
                      self.log_dict(filename[:-5], json_data_dict)
 
+        self.output_topline_results(all_results_dict, experiment_number)
+
         self.stop()
+
+    def output_topline_results(self, results_dict, experiment_number):
+        if experiment_number == 1:
+            self.log_experiment_1(results_dict)
+        elif experiment_number == 2:
+            self.log_experiment_2(results_dict)
+        elif experiment_number == 3:
+            self.log_experiment_3(results_dict)
+        elif experiment_number == 4:
+            self.log_experiment_4(results_dict)
+        else:
+            raise Exception(f"Experiment number {experiment_number} not supported")
+
+    def log_experiment_1(self, results_dict):
+        # Logs the average average f1 for each dataset over the x number of runs from different random seeds
+
+        classical_results_names = [run_name for run_name in results_dict.keys() if "best_classical_baselines" in run_name]
+        ft_results_names = [run_name for run_name in results_dict.keys() if "ft_task_test_metrics" in run_name]
+
+        dataset_names = list(set(["_".join(run_name.split("_")[:2]) for run_name in ft_results_names]))
+
+        for dataset in dataset_names:
+            classical_run_values = []
+            dnn_run_values = []
+
+            classical_dataset_runs = [run_name for run_name in classical_results_names if dataset in run_name]
+            dnn_dataset_runs = [run_name for run_name in ft_results_names if dataset in run_name]
+
+            for i, (dnn_dataset_run, classical_dataset_run) in enumerate(zip(dnn_dataset_runs, classical_dataset_runs)):
+                classical_target_value = results_dict[classical_dataset_run]["multiclass"]["all best metrics"]["test results best"]["average f1"]
+                dnn_target_value = results_dict[dnn_dataset_run][dataset]["average f1"]
+
+                self.log_metric(f"classical {dataset}", i, classical_target_value)
+                self.log_metric(f"dnn {dataset}", i, dnn_target_value)
+
+                classical_run_values.append(classical_target_value)
+                dnn_run_values.append(dnn_target_value)
+
+            averaged_classical_target_value = sum(classical_run_values)/len(classical_run_values)
+            averaged_dnn_target_value = sum(dnn_run_values)/len(dnn_run_values)
+
+            neptune.log_text("Overall results", f"{dataset} DNN: {averaged_dnn_target_value}")
+            neptune.log_text("Overall results", f"{dataset} Classical: {averaged_classical_target_value}")
+
+
+    def log_experiment_2(self, results_dict):
+        raise Exception(f"Experiment 2 output not yet implemented")
+
+    def log_experiment_3(self, results_dict):
+        raise Exception(f"Experiment 3 output not yet implemented")
+
+    def log_experiment_4(self, results_dict):
+        raise Exception(f"Experiment 4 output not yet implemented")
