@@ -1,6 +1,6 @@
 from ignite.engine import Engine
 from ignite.metrics import Accuracy, Recall, Precision, ConfusionMatrix
-from ignite.metrics import Metric
+from ignite.metrics import Metric, MetricsLambda
 import torch
 import numpy as np
 
@@ -229,9 +229,9 @@ def create_eval_engine(model, is_multilabel, n_classes, cpu):
   else:
       accuracy = Accuracy()
       accuracy.attach(eval_engine, "accuracy")
-      recall = Recall()
+      recall = Recall(average=False)
       recall.attach(eval_engine, "recall")
-      precision = Precision()
+      precision = Precision(average=False)
       precision.attach(eval_engine, "precision")
       confusion_matrix = ConfusionMatrix(num_classes=n_classes)
       confusion_matrix.attach(eval_engine, "confusion_matrix")
@@ -240,14 +240,18 @@ def create_eval_engine(model, is_multilabel, n_classes, cpu):
       f2 = (precision * recall * 5 / ((4*precision) + recall))
       f2.attach(eval_engine, "f2")
 
+      def Fbeta(r, p, beta):
+          return torch.mean((1 + beta ** 2) * p * r / (beta ** 2 * p + r + 1e-20)).item()
+
+      avg_f1 = MetricsLambda(Fbeta, recall, precision, 1)
+      avg_f1.attach(eval_engine, "average f1")
+      avg_f2 = MetricsLambda(Fbeta, recall, precision, 2)
+      avg_f2.attach(eval_engine, "average f2")
+
       avg_recall = Recall(average=True)
       avg_recall.attach(eval_engine, "average recall")
       avg_precision = Precision(average=True)
       avg_precision.attach(eval_engine, "average precision")
-      avg_f1 = (avg_precision * avg_recall * 2 / (avg_precision + avg_recall))
-      avg_f1.attach(eval_engine, "average f1")
-      avg_f2 = (avg_precision * avg_recall * 5 / ((4*avg_precision) + avg_recall))
-      avg_f2.attach(eval_engine, "average f2")
 
       if n_classes == 2:
           top_k = TopK(k=10, label_idx_of_interest=0)
