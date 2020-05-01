@@ -103,7 +103,9 @@ if args.do_classical:
             logger.log_json(f"{dataset_string}_{PARAMS.random_state}_zero_shot_classical_baselines.json", zero_shot_results)
             logger.log_json(f"{dataset_string}_{PARAMS.random_state}_mtl_zero_shot_classical_baselines.json", mtl_zero_shot_results)
 
-    del baseline_models, best_classical_result, all_classical_results, zero_shot_results, mtl_zero_shot_results
+        del zero_shot_results, mtl_zero_shot_results
+
+    del baseline_models, best_classical_result, all_classical_results
 
 # Do multi-task learning if more than one task is supplied
 if len(dataset_list) > 1:
