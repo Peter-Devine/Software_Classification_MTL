@@ -87,6 +87,8 @@ class NeptuneLogger:
                 input_dict[key] = input_dict[key].tolist()
             elif isinstance(value, dict):
                 input_dict[key] = self.clean_dict_for_json(input_dict[key])
+            elif not isinstance(value, list) and not isinstance(value, str) and not isinstance(value, float) and not isinstance(value, int):
+                del input_dict[key]
         return input_dict
 
     def log_json(self, file_name, input_dict):
