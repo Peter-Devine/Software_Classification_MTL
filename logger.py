@@ -80,16 +80,19 @@ class NeptuneLogger:
             neptune.stop()
 
     def clean_dict_for_json(self, input_dict):
+        output_dict = {}
         for key, value, in input_dict.items():
             if isinstance(value, torch.Tensor):
-                input_dict[key] = input_dict[key].cpu().numpy().tolist()
+                output_dict[key] = input_dict[key].cpu().numpy().tolist()
             elif isinstance(value, np.ndarray):
-                input_dict[key] = input_dict[key].tolist()
+                output_dict[key] = input_dict[key].tolist()
             elif isinstance(value, dict):
-                input_dict[key] = self.clean_dict_for_json(input_dict[key])
-            elif not isinstance(value, list) and not isinstance(value, str) and not isinstance(value, float) and not isinstance(value, int):
-                del input_dict[key]
-        return input_dict
+                output_dict[key] = self.clean_dict_for_json(input_dict[key])
+            elif isinstance(value, list) or isinstance(value, str) or isinstance(value, float) or isinstance(value, int):
+                output_dict[key] = value
+            else:
+                print(f"Not outputting {str(key)}: {str(value)}")
+        return output_dict
 
     def log_json(self, file_name, input_dict):
         # Log supplied dict to a json file
