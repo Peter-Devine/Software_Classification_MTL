@@ -48,8 +48,9 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
     for epoch in range(epochs):
 
-        # Reset iterable for each task
+        # Reset iterable for each task and set model for training
         for task_name, task in task_dict.items():
+            task.model.train()
             task.training_iterable = iter(task.train_data)
 
         # TRAIN
@@ -82,6 +83,9 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
             task.optimizer.step()
             task.model.zero_grad()
 
+            # Moves the gaols back to the CPU from GPU if originally on GPU (else does nothing)
+            golds = y.cpu()
+
             logger.log_metric(f'{run_type_log_prefix} {task_name} - loss', x=task_steps[task_name], y=loss.item())
 
             # Only log overall loss when the tasks have a shared language model layer. During fine tuning, their models are no longer shared, making this metric useless.
@@ -91,8 +95,11 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
             step_num += 1
             task_steps[task_name] += 1
 
+
         # VALIDATE
         for task_name, task in task_dict.items():
+            task.model.eval()
+
             if is_patience_exceeded(task_name):
                 print(f"{task_name} patience exceeded, ceasing evaluation on this task")
                 continue
@@ -117,6 +124,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     # TEST
     task_test_metrics = {task_name: None for task_name, task in task_dict.items()}
     for task_name, task in task_dict.items():
+        task.model.eval()
+
         model_saver.load_model(file_name=task_name, model=task.model)
 
         test_engine = create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes, cpu=PARAMS.cpu)
