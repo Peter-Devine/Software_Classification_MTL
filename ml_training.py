@@ -2,8 +2,13 @@ import random
 from evaluation_engines import create_eval_engine
 from model_saver import ModelSaver
 import time
+import torch
 
 def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
+    # Clear GPU cache
+    torch.cuda.empty_cache()
+
+    # Initialize the object for saving models
     model_saver = ModelSaver(model_dir="./models")
 
     # Get the per task eval metric against which best models are chosen
@@ -17,9 +22,10 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     for task_name, task in task_dict.items():
         task_training_list.extend([task_name]*task.train_length)
 
-    random.seed(PARAMS.random_state)
-
+    # You only need to shuffle training tasks when the tasks have a shared layer (I.e. are not fine tuning)
     if not is_fine_tuning:
+        # Set the random seeds for shuffling the train task list
+        random.seed(PARAMS.random_state)
         # Shuffle task list during multi-task training so that tasks are trained roughly evenly throughout
         random.shuffle(task_training_list)
 
