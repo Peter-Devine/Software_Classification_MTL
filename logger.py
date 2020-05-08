@@ -146,7 +146,8 @@ class NeptuneLogger:
         classical_results_names = [run_name for run_name in results_dict.keys() if "best_classical_baselines" in run_name]
         ft_results_names = [run_name for run_name in results_dict.keys() if "ft_task_test_metrics" in run_name]
 
-        dataset_names = list(set(["_".join(run_name.split("_")[:2]) for run_name in ft_results_names]))
+        # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
+        dataset_names = list(set(["_".join(run_name.replace("ft_task_test_metrics.json","").split("_")[:-1]) for run_name in ft_results_names]))
 
         for dataset in dataset_names:
             classical_run_values = []
