@@ -147,7 +147,7 @@ class NeptuneLogger:
         ft_results_names = [run_name for run_name in results_dict.keys() if "ft_task_test_metrics" in run_name]
 
         # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
-        dataset_names = list(set(["_".join(run_name.replace("ft_task_test_metrics","").split("_")[:-1]) for run_name in ft_results_names]))
+        dataset_names = list(set(["_".join(run_name.replace("_ft_task_test_metrics","").split("_")[:-1]) for run_name in ft_results_names]))
 
         for dataset in dataset_names:
             classical_run_values = []
