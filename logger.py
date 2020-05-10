@@ -64,7 +64,7 @@ class NeptuneLogger:
                 else:
                     neptune.log_text(f"{task_name} {dict_name}", f"{spacing_str}{str(key)}: {str(value)}")
         else:
-            print(f"{task_name} {dict_name}: {str(dict)}")
+            print(f"{task_name} {dict_name}: {str(input_dict)}")
 
     def log_results(self, task_name, split_type, epoch, results_dict):
         if self.logger_active:

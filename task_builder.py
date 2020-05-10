@@ -11,16 +11,23 @@ class TaskBuilder:
         self.random_state = random_state
         self.task_dict = {
             "maalej_2016": Task(data_getter_fn=self.get_maalej_2016, is_multilabel=False),
+            "maalej_bug_bin_2016": Task(data_getter_fn=self.get_bin_df_function(self.get_maalej_2016, "bug"), is_multilabel=False),
             "williams_2017": Task(data_getter_fn=self.get_williams_2017, is_multilabel=False),
+            "williams_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_williams_2017, "bug"), is_multilabel=False),
             "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False),
             "ciurumelea_2017_fine": Task(data_getter_fn=self.get_ciurumelea_2017_fine, is_multilabel=True),
             "ciurumelea_2017_coarse": Task(data_getter_fn=self.get_ciurumelea_2017_coarse, is_multilabel=True),
             "di_sorbo_2017": Task(data_getter_fn=self.get_di_sorbo_2017, is_multilabel=False),
+            "di_sorbo_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_di_sorbo_2017, "bug"), is_multilabel=False),
             "guzman_2015": Task(data_getter_fn=self.get_guzman_2015, is_multilabel=False),
+            "guzman_bug_bin_2015": Task(data_getter_fn=self.get_bin_df_function(self.get_guzman_2015, "bug"), is_multilabel=False),
             "scalabrino_2017": Task(data_getter_fn=self.get_scalabrino_2017, is_multilabel=False),
+            "scalabrino_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_scalabrino_2017, "bug"), is_multilabel=False),
             "jha_2017": Task(data_getter_fn=self.get_jha_2017, is_multilabel=False),
+            "jha_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_jha_2017, "bug"), is_multilabel=False),
             "morales_ramirez_2019": Task(data_getter_fn=self.get_morales_ramirez_2019, is_multilabel=False),
             "tizard_2019": Task(data_getter_fn=self.get_tizard_2019, is_multilabel=False),
+            "tizard_bug_bin_2019": Task(data_getter_fn=self.get_bin_df_function(self.get_tizard_2019, "bug"), is_multilabel=False),
         }
         self.data_path = "./data"
 
@@ -37,6 +44,19 @@ class TaskBuilder:
             target_task_dict[dataset_name] = self.task_dict[dataset_name].build_task(language_model, PARAMS, is_test_tasks)
 
         return target_task_dict
+
+    def get_bin_df_function(self, df_fn, bin_label):
+        def bin_df():
+            train, valid, test = df_fn()
+
+            label_binarizer = lambda x: bin_label if bin_label.lower() in x.lower() else f"Not_{bin_label}"
+            train["label"] = train["label"].apply(label_binarizer)
+            valid["label"] = valid["label"].apply(label_binarizer)
+            test["label"] = test["label"].apply(label_binarizer)
+
+            return train, valid, test
+        return bin_df
+
 
     ######### INDIVIDUAL DATA GETTERS ############
 
