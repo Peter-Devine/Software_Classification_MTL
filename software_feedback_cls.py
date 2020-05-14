@@ -81,7 +81,7 @@ for task_name, task in task_dict.items():
 
 if args.do_classical:
     # Do per-task in-domain training and evaluation first
-    baseline_models = BaselineModels()
+    baseline_models = BaselineModels(random_state=PARAMS.random_state)
     for task_name, task in task_dict.items():
         best_classical_result, all_classical_results = baseline_models.get_baselines(task.train_df, task.valid_df, task.test_df, best_metric=PARAMS.best_metric, is_multilabel=task.is_multilabel)
         logger.log_dict("best baselines", best_classical_result, task_name)
