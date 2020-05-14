@@ -326,17 +326,4 @@ class BaselineModels:
             input_test_df["baseline_label"] = input_test_df["label"]
             best_per_label_results["multiclass"], per_label_results["multiclass"] = self.get_baseline_results(best_metric=best_metric, train_df=input_train_df, valid_df=input_valid_df, test_df=input_test_df, is_multiclass=True)
 
-            # Only do binary models if the labels are not already binary
-            if len(input_test_df["label"].unique()) > 2:
-                for label in input_train_df.label.unique():
-                    # Make binary label set by making a boolean list of whether the label set is a given label or not
-                    input_train_df["baseline_label"] = input_train_df["label"] == label
-                    input_valid_df["baseline_label"] = input_valid_df["label"] == label
-                    input_test_df["baseline_label"] = input_test_df["label"] == label
-
-                    # Just optimize over binary f1 instead of average for binary classification
-                    binary_best_metric = best_metric.replace("average ", "")
-
-                    best_per_label_results[label], per_label_results[label] = self.get_baseline_results(best_metric=binary_best_metric, train_df=input_train_df, valid_df=input_valid_df, test_df=input_test_df, is_multiclass=False)
-
         return best_per_label_results, per_label_results
