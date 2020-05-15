@@ -12,22 +12,38 @@ class TaskBuilder:
         self.task_dict = {
             "maalej_2016": Task(data_getter_fn=self.get_maalej_2016, is_multilabel=False),
             "maalej_bug_bin_2016": Task(data_getter_fn=self.get_bin_df_function(self.get_maalej_2016, "bug"), is_multilabel=False),
+            "maalej_small_2016": Task(data_getter_fn=self.get_small_df_function(self.get_maalej_2016), is_multilabel=False),
+
             "williams_2017": Task(data_getter_fn=self.get_williams_2017, is_multilabel=False),
             "williams_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_williams_2017, "bug"), is_multilabel=False),
+            "williams_small_2017": Task(data_getter_fn=self.get_small_df_function(self.get_williams_2017), is_multilabel=False),
+
             "chen_2014_swiftkey": Task(data_getter_fn=self.get_chen_2014_swiftkey, is_multilabel=False),
+
             "ciurumelea_2017_fine": Task(data_getter_fn=self.get_ciurumelea_2017_fine, is_multilabel=True),
             "ciurumelea_2017_coarse": Task(data_getter_fn=self.get_ciurumelea_2017_coarse, is_multilabel=True),
+
             "di_sorbo_2017": Task(data_getter_fn=self.get_di_sorbo_2017, is_multilabel=False),
             "di_sorbo_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_di_sorbo_2017, "bug"), is_multilabel=False),
+            "di_sorbo_small_2017": Task(data_getter_fn=self.get_small_df_function(self.get_di_sorbo_2017), is_multilabel=False),
+
             "guzman_2015": Task(data_getter_fn=self.get_guzman_2015, is_multilabel=False),
             "guzman_bug_bin_2015": Task(data_getter_fn=self.get_bin_df_function(self.get_guzman_2015, "bug"), is_multilabel=False),
+            "guzman_small_2015": Task(data_getter_fn=self.get_small_df_function(self.get_guzman_2015), is_multilabel=False),
+
             "scalabrino_2017": Task(data_getter_fn=self.get_scalabrino_2017, is_multilabel=False),
             "scalabrino_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_scalabrino_2017, "bug"), is_multilabel=False),
+            "scalabrino_small_2017": Task(data_getter_fn=self.get_small_df_function(self.get_scalabrino_2017), is_multilabel=False),
+
             "jha_2017": Task(data_getter_fn=self.get_jha_2017, is_multilabel=False),
             "jha_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_jha_2017, "bug"), is_multilabel=False),
+            "jha_small_2017": Task(data_getter_fn=self.get_small_df_function(self.get_jha_2017), is_multilabel=False),
+
             "morales_ramirez_2019": Task(data_getter_fn=self.get_morales_ramirez_2019, is_multilabel=False),
+            
             "tizard_2019": Task(data_getter_fn=self.get_tizard_2019, is_multilabel=False),
             "tizard_bug_bin_2019": Task(data_getter_fn=self.get_bin_df_function(self.get_tizard_2019, "bug"), is_multilabel=False),
+            "tizard_small_2019": Task(data_getter_fn=self.get_small_df_function(self.get_tizard_2019), is_multilabel=False),
         }
         self.data_path = "./data"
 
@@ -56,6 +72,17 @@ class TaskBuilder:
 
             return train, valid, test
         return bin_df
+
+        def get_small_df_function(self, df_fn):
+            def bin_df():
+                train, valid, test = df_fn()
+
+                train = train.sample(350, random_state=self.random_state)
+                valid = valid.sample(150, random_state=self.random_state)
+                test = test.sample(200, random_state=self.random_state)
+
+                return train, valid, test
+            return bin_df
 
 
     ######### INDIVIDUAL DATA GETTERS ############
@@ -165,7 +192,7 @@ class TaskBuilder:
             "date_posted": date_posted
         })
 
-        train_and_val = df.sample(frac=0.8, random_state=self.random_state)
+        train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
         test = df.drop(train_and_val.index)
@@ -275,7 +302,7 @@ class TaskBuilder:
         columns_to_include = ["text"] + [x for x in df.columns if "label_" in x]
         df = df[columns_to_include]
 
-        train_and_val = df.sample(frac=0.8, random_state=self.random_state)
+        train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
         test = df.drop(train_and_val.index)
@@ -316,7 +343,7 @@ class TaskBuilder:
                 data = f.read()
                 all_review_df = add_data_to_df(data, all_review_df)
 
-        train_and_val = all_review_df.sample(n=438, random_state=self.random_state)
+        train_and_val = all_review_df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
         test = all_review_df.drop(train_and_val.index)
@@ -351,7 +378,7 @@ class TaskBuilder:
 
         df["app"] = df.app.apply(lambda x: int_to_app_name_map[x])
 
-        train_and_val = df.sample(frac=0.8, random_state=self.random_state)
+        train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
         test = df.drop(train_and_val.index)
