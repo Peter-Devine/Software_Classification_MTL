@@ -40,7 +40,7 @@ class TaskBuilder:
             "jha_small_2017": Task(data_getter_fn=self.get_small_df_function(self.get_jha_2017), is_multilabel=False),
 
             "morales_ramirez_2019": Task(data_getter_fn=self.get_morales_ramirez_2019, is_multilabel=False),
-            
+
             "tizard_2019": Task(data_getter_fn=self.get_tizard_2019, is_multilabel=False),
             "tizard_bug_bin_2019": Task(data_getter_fn=self.get_bin_df_function(self.get_tizard_2019, "bug"), is_multilabel=False),
             "tizard_small_2019": Task(data_getter_fn=self.get_small_df_function(self.get_tizard_2019), is_multilabel=False),
@@ -73,16 +73,16 @@ class TaskBuilder:
             return train, valid, test
         return bin_df
 
-        def get_small_df_function(self, df_fn):
-            def bin_df():
-                train, valid, test = df_fn()
+    def get_small_df_function(self, df_fn):
+        def bin_df():
+            train, valid, test = df_fn()
 
-                train = train.sample(350, random_state=self.random_state)
-                valid = valid.sample(150, random_state=self.random_state)
-                test = test.sample(200, random_state=self.random_state)
+            train = train.sample(350, random_state=self.random_state)
+            valid = valid.sample(150, random_state=self.random_state)
+            test = test.sample(200, random_state=self.random_state)
 
-                return train, valid, test
-            return bin_df
+            return train, valid, test
+        return bin_df
 
 
     ######### INDIVIDUAL DATA GETTERS ############
