@@ -16,4 +16,4 @@ for dataset in ${datasets[@]}; do
 done
 
 # Collect the generated output files and output them to a meta-experiment on Neptune
-python overall_experiment_data_collector.py --experiment_number=1 --experiment_name=experiment_1_all_datasets --neptune_username=$1
+python overall_experiment_data_collector.py --experiment_number=1 --experiment_name=experiment_1_all_bin_datasets --neptune_username=$1
