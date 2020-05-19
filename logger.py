@@ -3,10 +3,8 @@ import os
 import json
 import torch
 import numpy as np
-import scipy.stats
-import pandas as pd
-import statistics
 import matplotlib.pyplot as plt
+from experimental_results_processor import get_indomain_single_task_results
 
 
 class NeptuneLogger:
@@ -57,6 +55,12 @@ class NeptuneLogger:
             neptune.log_text(metric_name, x, text)
         else:
             print(f"metric_name: {metric_name}, \nx:{x}, \ntext:{text}\n\n")
+
+    def log_text(self, metric_name, text):
+        if self.logger_active:
+            neptune.log_text(metric_name, text)
+        else:
+            print(f"metric_name: {metric_name}, \ntext:{text}\n\n")
 
     def log_dict(self, dict_name, input_dict, task_name="", recursion_level = 0):
         if self.logger_active:
@@ -202,133 +206,16 @@ class NeptuneLogger:
             raise Exception(f"Experiment number {experiment_number} not supported")
 
     def log_experiment_1(self, results_dict, experiment_name):
-        # Logs the average average f1 for each dataset over the x number of runs from different random seeds
-
-        classical_results_names = [run_name for run_name in results_dict.keys() if "best_classical_baselines" in run_name]
-        ft_results_names = [run_name for run_name in results_dict.keys() if "ft_task_test_metrics" in run_name]
-
-        # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
-        dataset_names = list(set(["_".join(run_name.replace("_ft_task_test_metrics","").split("_")[:-1]) for run_name in ft_results_names]))
-
-        pan_dataset_results_list = []
-
-        for dataset in dataset_names:
-            classical_run_values = []
-            dnn_run_values = []
-
-            classical_dataset_runs = [run_name for run_name in classical_results_names if dataset in run_name]
-            dnn_dataset_runs = [run_name for run_name in ft_results_names if dataset in run_name]
-
-            for i, (dnn_dataset_run, classical_dataset_run) in enumerate(zip(dnn_dataset_runs, classical_dataset_runs)):
-                classical_target_value = results_dict[classical_dataset_run]["multiclass"]["all best metrics"]["test results best"]["average f1"]
-                dnn_target_value = results_dict[dnn_dataset_run][dataset]["average f1"]
-
-                self.log_metric(f"classical {dataset}", i, classical_target_value)
-                self.log_metric(f"dnn {dataset}", i, dnn_target_value)
-
-                classical_run_values.append(classical_target_value)
-                dnn_run_values.append(dnn_target_value)
-
-            # Take the list of the average f1 scores for each run of the dataset with a different random split
-            # and get the average of these values, for both classical and DNN.
-            # Also calculate the standard deviation of these values for a view as to the stability of these results.
-            averaged_classical_target_value = statistics.mean(classical_run_values)
-            averaged_dnn_target_value = statistics.mean(dnn_run_values)
-            averaged_classical_target_value_sd = statistics.stdev(classical_run_values)
-            averaged_dnn_target_value_sd = statistics.stdev(dnn_run_values)
-
-            ttest_p_val = scipy.stats.ttest_rel(dnn_run_values, classical_run_values).pvalue
-            wilcoxon_p_val = scipy.stats.wilcoxon(dnn_run_values, classical_run_values, alternative="two-sided").pvalue
-
-            pan_dataset_results_list.append(
-                                        {"Classical average F1": averaged_classical_target_value,
-                                        "DNN average F1": averaged_dnn_target_value,
-                                        "Classical average F1 stdev": averaged_classical_target_value_sd,
-                                        "DNN average F1 stdev": averaged_dnn_target_value_sd,
-                                        "T-test p val": ttest_p_val,
-                                        "Wilcoxon p val": wilcoxon_p_val})
-
-            # Add wilcoxon for each population https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.wilcoxon.html
-
-            # Output bar graph of all datasets with SD error bars
-
-            neptune.log_text("Overall results", f"{dataset} DNN: {averaged_dnn_target_value}")
-            neptune.log_text("Overall results", f"{dataset} Classical: {averaged_classical_target_value}")
-            neptune.log_text("Overall results", f"{dataset} DNN stdev: {averaged_dnn_target_value_sd}")
-            neptune.log_text("Overall results", f"{dataset} Classical stdev: {averaged_classical_target_value_sd}")
-            neptune.log_text("Overall results", f"{dataset} t-test p val: {ttest_p_val}")
-            neptune.log_text("Overall results", f"{dataset} Wilcoxon p val: {wilcoxon_p_val}")
-            neptune.log_text("Overall results", "\n")
-
-        results_df = pd.DataFrame(pan_dataset_results_list, index=dataset_names)
+        # Get a df of all the collated in domain single task results for both classical and DNN models
+        results_df = get_indomain_single_task_results(results_dict=results_dict, logger=self)
 
         graph_path = self.save_avg_f1_graph(results_df, experiment_name)
+
         self.log_image(f"{experiment_name} graphical results", graph_path)
 
 
     def log_experiment_2(self, results_dict, experiment_name):
         raise Exception(f"Experiment 2 output not yet implemented")
-        # Logs the average average f1 for each dataset over the x number of runs from different random seeds
-        classical_results_names = [run_name for run_name in results_dict.keys() if "zero_shot_classical_baselines" in run_name]
-        ft_results_names = [run_name for run_name in results_dict.keys() if "zero_shot_test_metrics" in run_name]
-
-        # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
-        dataset_names = list(set(["_".join(run_name.replace("_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_results_names]))
-
-        pan_dataset_results_list = []
-
-        for dataset in dataset_names:
-            classical_run_values = []
-            dnn_run_values = []
-
-            classical_dataset_runs = [run_name for run_name in classical_results_names if dataset in run_name]
-            dnn_dataset_runs = [run_name for run_name in ft_results_names if dataset in run_name]
-
-            for i, (dnn_dataset_run, classical_dataset_run) in enumerate(zip(dnn_dataset_runs, classical_dataset_runs)):
-                classical_target_value = results_dict[classical_dataset_run]["multiclass"]["all best metrics"]["test results best"]["average f1"]
-                dnn_target_value = results_dict[dnn_dataset_run][dataset]["average f1"]
-
-                self.log_metric(f"classical {dataset}", i, classical_target_value)
-                self.log_metric(f"dnn {dataset}", i, dnn_target_value)
-
-                classical_run_values.append(classical_target_value)
-                dnn_run_values.append(dnn_target_value)
-
-            # Take the list of the average f1 scores for each run of the dataset with a different random split
-            # and get the average of these values, for both classical and DNN.
-            # Also calculate the standard deviation of these values for a view as to the stability of these results.
-            averaged_classical_target_value = statistics.mean(classical_run_values)
-            averaged_dnn_target_value = statistics.mean(dnn_run_values)
-            averaged_classical_target_value_sd = statistics.stdev(classical_run_values)
-            averaged_dnn_target_value_sd = statistics.stdev(dnn_run_values)
-
-            ttest_p_val = scipy.stats.ttest_rel(dnn_run_values, classical_run_values).pvalue
-            wilcoxon_p_val = scipy.stats.wilcoxon(dnn_run_values, classical_run_values, alternative="two-sided").pvalue
-
-            pan_dataset_results_list.append(
-                                        {"Classical average F1": averaged_classical_target_value,
-                                        "DNN average F1": averaged_dnn_target_value,
-                                        "Classical average F1 stdev": averaged_classical_target_value_sd,
-                                        "DNN average F1 stdev": averaged_dnn_target_value_sd,
-                                        "T-test p val": ttest_p_val,
-                                        "Wilcoxon p val": wilcoxon_p_val})
-
-            # Add wilcoxon for each population https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.wilcoxon.html
-
-            # Output bar graph of all datasets with SD error bars
-
-            neptune.log_text("Overall results", f"{dataset} DNN: {averaged_dnn_target_value}")
-            neptune.log_text("Overall results", f"{dataset} Classical: {averaged_classical_target_value}")
-            neptune.log_text("Overall results", f"{dataset} DNN stdev: {averaged_dnn_target_value_sd}")
-            neptune.log_text("Overall results", f"{dataset} Classical stdev: {averaged_classical_target_value_sd}")
-            neptune.log_text("Overall results", f"{dataset} t-test p val: {ttest_p_val}")
-            neptune.log_text("Overall results", f"{dataset} Wilcoxon p val: {wilcoxon_p_val}")
-            neptune.log_text("Overall results", "\n")
-
-        results_df = pd.DataFrame(pan_dataset_results_list, index=dataset_names)
-
-        graph_path = self.save_avg_f1_graph(results_df, experiment_name)
-        self.log_image(f"{experiment_name} graphical results", graph_path)
 
     def log_experiment_3(self, results_dict, experiment_name):
         raise Exception(f"Experiment 3 output not yet implemented")

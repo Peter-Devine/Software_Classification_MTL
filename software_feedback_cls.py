@@ -56,6 +56,8 @@ task_builder = TaskBuilder(random_state=PARAMS.random_state)
 
 task_dict = task_builder.build_tasks(dataset_list, PARAMS)
 
+run_type = "multi_task" if len(dataset_list) > 1 else "single_task"
+
 # Create the test_task_dict for zero-shot evaluation if we have been supplied test tasks
 if len(test_dataset_list) > 0:
     # If we already have a task created in the task_dict, it makes sense to just copy that task into the test_task_dict instead of creating a new task (saves on memory)
@@ -87,7 +89,7 @@ if args.do_classical:
         logger.log_dict("best baselines", best_classical_result, task_name)
         if args.output_text:
             dataset_string = "__".join(dataset_list)
-            logger.log_json(f"{dataset_string}_{PARAMS.random_state}_best_classical_baselines.json", best_classical_result)
+            logger.log_json(f"{task_name}_{PARAMS.random_state}_{run_type}_best_classical_baselines.json", best_classical_result)
 
         logger.log_dict("all baselines", all_classical_results, task_name)
 
@@ -100,8 +102,8 @@ if args.do_classical:
 
         if args.output_text:
             dataset_string = "__".join(dataset_list)
-            logger.log_json(f"{dataset_string}_{PARAMS.random_state}_zero_shot_classical_baselines.json", zero_shot_results)
-            logger.log_json(f"{dataset_string}_{PARAMS.random_state}_mtl_zero_shot_classical_baselines.json", mtl_zero_shot_results)
+            logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_zero_shot_classical_baselines.json", zero_shot_results)
+            logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_mtl_zero_shot_classical_baselines.json", mtl_zero_shot_results)
 
         del zero_shot_results, mtl_zero_shot_results
 
@@ -114,8 +116,8 @@ if len(dataset_list) > 1:
     if args.output_text:
         # Output final results to disk
         dataset_string = "__".join(dataset_list)
-        logger.log_json(f"{dataset_string}_{PARAMS.random_state}_task_eval_metrics.json", task_eval_metrics)
-        logger.log_json(f"{dataset_string}_{PARAMS.random_state}_task_test_metrics.json", task_test_metrics)
+        logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_task_eval_metrics.json", task_eval_metrics)
+        logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_task_test_metrics.json", task_test_metrics)
 
 # Fine tune on each task individually
 ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning=True)
@@ -123,8 +125,8 @@ ft_task_eval_metrics, ft_task_test_metrics = train_on_tasks(task_dict, PARAMS, l
 if args.output_text:
     # Output final results to disk
     dataset_string = "__".join(dataset_list)
-    logger.log_json(f"{dataset_string}_{PARAMS.random_state}_ft_task_eval_metrics.json", ft_task_eval_metrics)
-    logger.log_json(f"{dataset_string}_{PARAMS.random_state}_ft_task_test_metrics.json", ft_task_test_metrics)
+    logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_ft_task_eval_metrics.json", ft_task_eval_metrics)
+    logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_ft_task_test_metrics.json", ft_task_test_metrics)
 
 # If we have test tasks and a label with which to compare them, then we run zero-shot evaluation
 if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
@@ -133,6 +135,6 @@ if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
     logger.log_dict("LM zero shot", lm_zero_shot_results)
     if args.output_text:
         dataset_string = "__".join(dataset_list)
-        logger.log_json(f"{dataset_string}_{PARAMS.random_state}_zero_shot_test_metrics.json", lm_zero_shot_results)
+        logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_zero_shot_test_metrics.json", lm_zero_shot_results)
 
 logger.stop()
