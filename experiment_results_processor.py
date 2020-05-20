@@ -20,7 +20,7 @@ def get_indomain_single_task_results(results_dict, logger):
     ft_results_names = [run_name for run_name in results_dict.keys() if "single_task_ft_task_test_metrics" in run_name]
 
     # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
-    dataset_names = list(set(["_".join(run_name.replace("_single_task_ft_task_test_metrics","").split("_")[:-1]) for run_name in ft_results_names]))
+    dataset_names = sorted(list(set(["_".join(run_name.replace("_single_task_ft_task_test_metrics","").split("_")[:-1]) for run_name in ft_results_names])))
 
     pan_dataset_results_list = []
 
@@ -55,8 +55,8 @@ def get_indomain_single_task_results(results_dict, logger):
                                     "DNN average F1": averaged_dnn_target_value,
                                     "Classical average F1 stdev": averaged_classical_target_value_sd,
                                     "DNN average F1 stdev": averaged_dnn_target_value_sd,
-                                    "T-test p val": ttest_p_val,
-                                    "Wilcoxon p val": wilcoxon_p_val})
+                                    "In-domain T-test p val": ttest_p_val,
+                                    "In-domain Wilcoxon p val": wilcoxon_p_val})
 
 
         logger.log_text("Overall results", f"{dataset} DNN: {averaged_dnn_target_value}")
@@ -77,7 +77,7 @@ def get_outdomain_single_task_results(results_dict, logger):
     ft_results_names = [run_name for run_name in results_dict.keys() if "single_task_zero_shot_test_metrics" in run_name]
 
     # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
-    dataset_names = list(set(["_".join(run_name.replace("_single_task_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_results_names]))
+    dataset_names = sorted(list(set(["_".join(run_name.replace("_single_task_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_results_names])))
 
     pan_dataset_results_list = []
 
@@ -134,23 +134,36 @@ def get_outdomain_single_task_results(results_dict, logger):
     # Get all the results of zero-shot
     for test_task_name in dnn_run_values.keys():
 
-        classical_vals = []
-        dnn_vals = []
+        classical_zero_shot_vals = []
+        dnn_zero_shot_vals = []
+        classical_in_domain_vals = []
+        dnn_in_domain_vals = []
 
         # Get a long list of all the target values for every run of every training set
         for train_task_name in dnn_run_values[test_task_name].keys():
-            classical_vals.extend(classical_run_values[test_task_name][train_task_name])
-            dnn_vals.extend(dnn_run_values[test_task_name][train_task_name])
+            if train_task_name == test_task_name:
+                classical_in_domain_vals = classical_run_values[test_task_name][train_task_name]
+                dnn_in_domain_vals = dnn_run_values[test_task_name][train_task_name]
+            else:
+                classical_zero_shot_vals.extend(classical_run_values[test_task_name][train_task_name])
+                dnn_zero_shot_vals.extend(dnn_run_values[test_task_name][train_task_name])
 
-        classical_avg, classical_sd, dnn_avg, dnn_sd, ttest_p_val, wilcoxon_p_val = get_stats_for_two_lists(classical_vals, dnn_vals)
+        classical_zs_avg, classical_zs_sd, dnn_zs_avg, dnn_zs_sd, zs_ttest_p_val, zs_wilcoxon_p_val = get_stats_for_two_lists(classical_zero_shot_vals, dnn_zero_shot_vals)
+        classical_id_avg, classical_id_sd, dnn_id_avg, dnn_id_sd, id_ttest_p_val, id_wilcoxon_p_val = get_stats_for_two_lists(classical_in_domain_vals, dnn_in_domain_vals)
 
         zero_shot_results.append({
-            "Classical average F1": classical_avg,
-            "DNN average F1": dnn_avg,
-            "Classical average F1 stdev": classical_sd,
-            "DNN average F1 stdev": dnn_sd,
-            "T-test p val": ttest_p_val,
-            "Wilcoxon p val": wilcoxon_p_val
+            "Classical zero-shot average F1": classical_zs_avg,
+            "DNN zero-shot average F1": dnn_zs_avg,
+            "Classical zero-shot average F1 stdev": classical_zs_sd,
+            "DNN zero-shot average F1 stdev": dnn_zs_sd,
+            "Zero-shot T-test p val": zs_ttest_p_val,
+            "Zero-shot Wilcoxon p val": zs_wilcoxon_p_val,
+            "Classical in-domain average F1": classical_zs_avg,
+            "DNN in-domain average F1": dnn_zs_avg,
+            "Classical in-domain average F1 stdev": classical_zs_sd,
+            "DNN in-domain average F1 stdev": dnn_zs_sd,
+            "In-domain T-test p val": zs_ttest_p_val,
+            "In-domain Wilcoxon p val": zs_wilcoxon_p_val,
         })
 
     zero_shot_results_df = pd.DataFrame(zero_shot_results, index=dnn_run_values.keys())

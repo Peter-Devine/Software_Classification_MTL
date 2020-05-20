@@ -4,7 +4,7 @@ import json
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from experimental_results_processor import get_indomain_single_task_results
+from experimental_results_processor import get_indomain_single_task_results, get_outdomain_single_task_results
 
 
 class NeptuneLogger:
@@ -103,7 +103,7 @@ class NeptuneLogger:
                 print(f"Not outputting {str(key)}: {str(value)}")
         return output_dict
 
-    def save_avg_f1_graph(self, df, experiment_name):
+    def save_avg_f1_graph(self, df, experiment_name, run_types, p_val_column):
         # Create 2 plots, one taking up most of the vertical axis, and a small table beneath that
         fig = plt.figure(figsize=(11,6))
         gs = fig.add_gridspec(20, 1)
@@ -114,12 +114,20 @@ class NeptuneLogger:
         x = np.array(list(range(len(df.index))))
 
         # How wide the bars should be
-        width = 0.3
+        # They should get thinner as we add more series of data to the graph
+        width = 0.6 / len(run_types)
 
-        # Plot a bar for both dnn and classical for each dataset, with the error for each dataset
-        dnn_bar = ax0.bar(x-(width/2), df["DNN average F1"], width=width, align='center', yerr=df["DNN average F1 stdev"])
-        classical_bar = ax0.bar(x+(width/2), df["Classical average F1"], width=width, align='center', yerr=df["Classical average F1 stdev"])
-        ax0.legend([dnn_bar, classical_bar], ["DNN", "Classical"], loc=1)
+        # Make a list of the bars added to the graph to use in creating the legend
+        bar_list = []
+
+        for i, run_type in enumerate(run_types):
+            # We make the offset of the bars proportional to the number of series in the data. More series means we need a greater min.max offset.
+            bar_offset = i - (len(run_types)/2) + 0.5
+
+            # Plot a bar for all run types for each dataset, with the error for each dataset
+            bar_list.append(ax0.bar(x+bar_offset, df[f"{run_type} average F1"], width=width, align='center', yerr=df[f"{run_type} average F1 stdev"]))
+
+        ax0.legend(bar_list, run_types, loc=1)
         ax0.set_xticks(x)
         ax0.set_xticklabels(df.index)
         ax0.set_xlabel("Dataset")
@@ -130,7 +138,7 @@ class NeptuneLogger:
         ax1.yaxis.set_visible(False)
 
         # We get the statistical test data only
-        stat_test_df = df[["T-test p val", "Wilcoxon p val"]]
+        stat_test_df = df[[f"{p_val_column} T-test p val", f"{p_val_column} Wilcoxon p val"]]
 
         # We colour the cell green if the statistical test falls below our threshold
         certainty_threshold = 0.05
@@ -139,7 +147,7 @@ class NeptuneLogger:
 
         table = ax1.table(
                 cellText=stat_test_df.applymap('{:,.3f}'.format).T.values.tolist(),
-                rowLabels=["T-test p val", "Wilc p val"],
+                rowLabels=[f"{p_val_column} T-test p val", f"{p_val_column} Wilc p val"],
                 cellColours=cell_colours.T.values.tolist(),
                 loc='center',
                 cellLoc='center'
@@ -158,6 +166,14 @@ class NeptuneLogger:
 
     def log_image(self, image_name, image_path):
         neptune.log_image(image_name, image_path)
+
+    def log_dataframe(self, df_name, df):
+        df = df.applymap(lambda x: f"{float(x):.3}")
+
+        df_strings = df.to_string().split("\n")
+
+        for df_string in df_strings:
+            self.log_text(df_name, df_string)
 
     def log_json(self, file_name, input_dict):
         # Log supplied dict to a json file
@@ -209,13 +225,31 @@ class NeptuneLogger:
         # Get a df of all the collated in domain single task results for both classical and DNN models
         results_df = get_indomain_single_task_results(results_dict=results_dict, logger=self)
 
-        graph_path = self.save_avg_f1_graph(results_df, experiment_name)
-
+        # Draw and save a graph comparing DNN with Classical performance on in domain tasks
+        graph_path = self.save_avg_f1_graph(results_df, experiment_name, run_types = ["DNN", "Classical"], p_val_column="In-domain")
         self.log_image(f"{experiment_name} graphical results", graph_path)
+
+        self.log_dataframe("Experiment 1 results df", results_df)
 
 
     def log_experiment_2(self, results_dict, experiment_name):
         raise Exception(f"Experiment 2 output not yet implemented")
+
+        # Get the df for averaged zero shot performance across all training tasks
+        # Also get the complete results for zero-shot learning
+        zero_shot_results_df, dnn_all_zero_shot_results, classical_all_zero_shot_results = get_outdomain_single_task_results()
+
+        # Make a bar chart comparing the in and out of domain performance of models for both classical and DNN models.
+        graph_path = self.save_avg_f1_graph(zero_shot_results_df, experiment_name, run_types = ["DNN in-domain", "Classical in-domain", "Classical zero-shot", "DNN zero-shot"], p_val_column="Zero-shot")
+
+        # Save the comparison bar chart
+        self.log_image(f"{experiment_name} graphical results", graph_path)
+
+        # Output the full datasets of how each training set interacts with each test set for both classical and DNN
+        self.log_dataframe("Experiment 2 Classical results df", classical_all_zero_shot_results)
+        self.log_dataframe("Experiment 2 DNN results df", dnn_all_zero_shot_results)
+        self.log_dataframe("Experiment 2 aggregated results", zero_shot_results_df)
+
 
     def log_experiment_3(self, results_dict, experiment_name):
         raise Exception(f"Experiment 3 output not yet implemented")
