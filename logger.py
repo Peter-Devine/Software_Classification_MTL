@@ -4,7 +4,7 @@ import json
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from experimental_results_processor import get_indomain_single_task_results, get_outdomain_single_task_results
+from experiment_results_processor import get_indomain_single_task_results, get_outdomain_single_task_results
 
 
 class NeptuneLogger:
