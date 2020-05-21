@@ -97,7 +97,7 @@ class BaselineModels:
         for test_task_name, test_task in test_task_dict.items():
 
             # Get the test set
-            test_mtl_df = self.create_zero_shot_df(test_task.train_df, zero_shot_label, test_task.is_multilabel, training=False)
+            test_mtl_df = self.create_zero_shot_df(test_task.test_df, zero_shot_label, test_task.is_multilabel, training=False)
 
             # Get results on test set using model trained on training set and selected on validation set
             zero_shot_mtl_results[test_task_name] = self.get_zero_shot_result_given_model(train_mtl_df, valid_mtl_df, test_mtl_df, best_results)
