@@ -24,7 +24,7 @@ def get_indomain_single_task_results(results_dict, logger):
 
     pan_dataset_results_list = []
 
-    for dataset in dataset_names:
+    for counter, dataset in enumerate(dataset_names):
         classical_run_values = []
         dnn_run_values = []
 
@@ -59,13 +59,13 @@ def get_indomain_single_task_results(results_dict, logger):
                                     "In-domain Wilcoxon p val": wilcoxon_p_val})
 
 
-        logger.log_text("Overall results", f"{dataset} DNN: {averaged_dnn_target_value}")
-        logger.log_text("Overall results", f"{dataset} Classical: {averaged_classical_target_value}")
-        logger.log_text("Overall results", f"{dataset} DNN stdev: {averaged_dnn_target_value_sd}")
-        logger.log_text("Overall results", f"{dataset} Classical stdev: {averaged_classical_target_value_sd}")
-        logger.log_text("Overall results", f"{dataset} t-test p val: {ttest_p_val}")
-        logger.log_text("Overall results", f"{dataset} Wilcoxon p val: {wilcoxon_p_val}")
-        logger.log_text("Overall results", "\n")
+        logger.log_text("Overall results", counter, f"{dataset} DNN: {averaged_dnn_target_value}")
+        logger.log_text("Overall results", counter, f"{dataset} Classical: {averaged_classical_target_value}")
+        logger.log_text("Overall results", counter, f"{dataset} DNN stdev: {averaged_dnn_target_value_sd}")
+        logger.log_text("Overall results", counter, f"{dataset} Classical stdev: {averaged_classical_target_value_sd}")
+        logger.log_text("Overall results", counter, f"{dataset} t-test p val: {ttest_p_val}")
+        logger.log_text("Overall results", counter, f"{dataset} Wilcoxon p val: {wilcoxon_p_val}")
+        logger.log_text("Overall results", counter, "\n")
 
     results_df = pd.DataFrame(pan_dataset_results_list, index=dataset_names)
 

@@ -56,12 +56,6 @@ class NeptuneLogger:
         else:
             print(f"metric_name: {metric_name}, \nx:{x}, \ntext:{text}\n\n")
 
-    def log_text(self, metric_name, text):
-        if self.logger_active:
-            neptune.log_text(metric_name, text)
-        else:
-            print(f"metric_name: {metric_name}, \ntext:{text}\n\n")
-
     def log_dict(self, dict_name, input_dict, task_name="", recursion_level = 0):
         if self.logger_active:
             # Add spaces so that dict prints prettily in logger
@@ -172,8 +166,8 @@ class NeptuneLogger:
 
         df_strings = df.to_string().split("\n")
 
-        for df_string in df_strings:
-            self.log_text(df_name, df_string)
+        for i, df_string in enumerate(df_strings):
+            self.log_text(df_name, i, df_string)
 
     def log_json(self, file_name, input_dict):
         # Log supplied dict to a json file
