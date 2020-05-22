@@ -90,7 +90,7 @@ def get_outdomain_single_task_results(results_dict, logger):
     for i, dataset in enumerate(dataset_names):
 
         classical_dataset_runs = sorted([run_name for run_name in classical_results_names if dataset in run_name])
-        classical_binary_dataset_runs = sorted([run_name for run_name in classical_results_names if dataset in run_name])
+        classical_binary_dataset_runs = sorted([run_name for run_name in classical_binary_results_names if dataset in run_name])
         dnn_dataset_runs = sorted([run_name for run_name in ft_results_names if dataset in run_name])
 
         for dnn_dataset_run, classical_dataset_run, classical_bin_dataset_run in zip(dnn_dataset_runs, classical_dataset_runs, classical_binary_dataset_runs):
