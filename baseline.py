@@ -148,28 +148,45 @@ class BaselineModels:
     def get_zero_shot_baselines(self, train_task_dict, test_task_dict, best_metric, zero_shot_label):
         zero_shot_results = {}
         for task_name, task in train_task_dict.items():
-            train_df = self.create_zero_shot_df(task.train_df, zero_shot_label, task.is_multilabel, training=True)
-            valid_df = self.create_zero_shot_df(task.valid_df, zero_shot_label, task.is_multilabel, training=False)
-            best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=train_df, valid_df=valid_df, test_df=None, is_multiclass=False)
+            # We keep the labels the same for this baseline. In other words, we train a multiclass classifier for this zero-shot learning test, and convert the outputs later.
+            task.train_df["baseline_label"] = task.train_df.label
+            task.valid_df["baseline_label"] = task.valid_df.label
+            best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=task.train_df, valid_df=task.valid_df, test_df=None, is_multiclass=False)
 
             # Store the pre-evaluation model config, metrics etc. in the results
             zero_shot_results[task_name] = best_results
 
             for test_task_name, test_task in test_task_dict.items():
-                test_df = self.create_zero_shot_df(test_task.test_df, zero_shot_label, test_task.is_multilabel, training=False)
-
-                zero_shot_results[task_name][test_task_name] = self.get_zero_shot_result_given_model(train_df, valid_df, test_df, best_results)
+                zero_shot_results[task_name][test_task_name] = self.get_zero_shot_result_given_model(task.train_df, task.valid_df, test_task.test_df, best_results, zero_shot_label=zero_shot_label)
 
         return zero_shot_results
 
-    def get_zero_shot_result_given_model(self, train_df, valid_df, test_df, best_results):
+    def get_zero_shot_result_given_model(self, train_df, valid_df, test_df, best_results, zero_shot_label=None):
         is_best_model_tfidf = best_results["best config"]["input type"] == "tfidf"
         train_X, valid_X, test_X = self.transform_text(train_df, valid_df, test_df, is_idf=is_best_model_tfidf)
 
         best_model = best_results["best model"]
-        test_preds = best_model.predict(test_X)
 
-        zero_shot_result = self.get_metrics_from_preds(test_df.baseline_label, test_preds, is_multiclass=False)
+        # If we have a zero-shot label (I.e., the datasets have not already been converted to a binary label set of True/False),
+        # then we need to get the probabilities of the zero-shot label class, and then compare that probability to that of every other class.
+        # Then, if the probability of that class is greater than the sum of the probabilities of every other class, then we predict that class.
+        # If not, then we predict another class.
+        if zero_shot_label is not None:
+            zero_shot_class_index = [i for i, class in enumerate(best_model.classes_) if zero_shot_label in class.lower()]
+            assert len(zero_shot_class_index) == 1, f"Multiple classes contain zero shot label. Looking for one instance of {zero_shot_label} within {best_model.classes_}"
+            zero_shot_class_index = zero_shot_class_index[0]
+
+            # Get the probabilities that the prediction is the in class zero shot label
+            test_preds = best_model.predict_proba(test_X)[:,zero_shot_class_index]
+            # We set the prediction that the label is the zero-shot class if its probability is greater than 0.5 (50%).
+            # Since this is a binary problem (zero-shot class or NOT zero-shot class), a threshold of 50% probability is appropriate to choose 1 class between 2.
+            test_preds = np.array([pred >= 0.5 for pred in test_preds])
+            test_golds = np.array([zero_shot_label in gold.lower() for gold in test_df.label])
+        else:
+            test_preds = best_model.predict(test_X)
+            test_golds = test_df.baseline_label
+
+        zero_shot_result = self.get_metrics_from_preds(test_golds, test_preds, is_multiclass=False)
         return zero_shot_result
 
     def get_metrics_from_preds(self, golds, preds, is_multiclass, binarizer=None):
