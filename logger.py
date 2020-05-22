@@ -227,7 +227,6 @@ class NeptuneLogger:
 
 
     def log_experiment_2(self, results_dict, experiment_name):
-        raise Exception(f"Experiment 2 output not yet implemented")
 
         # Get the df for averaged zero shot performance across all training tasks
         # Also get the complete results for zero-shot learning
