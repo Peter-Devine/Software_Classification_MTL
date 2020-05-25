@@ -169,7 +169,7 @@ class BaselineModels:
         # Then, if the probability of that class is greater than the sum of the probabilities of every other class, then we predict that class.
         # If not, then we predict another class.
         if zero_shot_label is not None:
-            zero_shot_class_index = [i for i, class in enumerate(best_model.classes_) if zero_shot_label in class.lower()]
+            zero_shot_class_index = [i for i, class_ in enumerate(best_model.classes_) if zero_shot_label in class_.lower()]
             assert len(zero_shot_class_index) == 1, f"Multiple classes contain zero shot label. Looking for one instance of {zero_shot_label} within {best_model.classes_}"
             zero_shot_class_index = zero_shot_class_index[0]
 
