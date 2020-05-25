@@ -8,7 +8,7 @@ export NEPTUNE_API_TOKEN=$2
 
 all_datasets=jha_2017,scalabrino_2017,maalej_2016,williams_2017,di_sorbo_2017,guzman_2015,tizard_2019
 
-# Run experiment 1 on all datasets for 10 different random seeds
+# Run experiment 2 on all datasets for 10 different random seeds
 for dataset in ${datasets[@]}; do
 	for random_state in ${random_states[@]}; do
 
