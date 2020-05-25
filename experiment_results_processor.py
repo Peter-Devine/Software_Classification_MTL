@@ -199,7 +199,7 @@ def get_outdomain_single_task_results(results_dict, logger):
 
     zero_shot_results_df = pd.DataFrame(zero_shot_results, index=dnn_run_values.keys())
 
-    dnn_all_zero_shot_results = dnn_run_values.applymap(lambda x: statistics.mean(x))
-    classical_all_zero_shot_results = classical_run_values.applymap(lambda x: statistics.mean(x))
+    dnn_all_zero_shot_results = pd.DataFrame(dnn_run_values).applymap(lambda x: statistics.mean(x))
+    classical_all_zero_shot_results = pd.DataFrame(classical_run_values).applymap(lambda x: statistics.mean(x))
 
     return zero_shot_results_df, dnn_all_zero_shot_results, classical_all_zero_shot_results
