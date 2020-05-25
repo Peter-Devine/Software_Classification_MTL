@@ -3,14 +3,15 @@ import pandas as pd
 import statistics
 
 def get_stats_for_two_lists(list_of_vals_0, list_of_vals_1):
-    mean_0 = statistics.mean(list_of_vals_0)
-    stdev_0 = statistics.stdev(list_of_vals_0)
 
-    mean_1 = statistics.mean(list_of_vals_1)
-    stdev_1 = statistics.stdev(list_of_vals_1)
+    mean_0 = statistics.mean(list_of_vals_0) if len(list_of_vals_0) > 0 else 0
+    stdev_0 = statistics.stdev(list_of_vals_0) if len(list_of_vals_0) > 0 else 0
 
-    ttest_p_val = scipy.stats.ttest_rel(list_of_vals_0, list_of_vals_1).pvalue
-    wilcoxon_p_val = scipy.stats.wilcoxon(list_of_vals_0, list_of_vals_1, alternative="two-sided").pvalue
+    mean_1 = statistics.mean(list_of_vals_1) if len(list_of_vals_1) > 0 else 0
+    stdev_1 = statistics.stdev(list_of_vals_1) if len(list_of_vals_1) > 0 else 0
+
+    ttest_p_val = scipy.stats.ttest_rel(list_of_vals_0, list_of_vals_1).pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
+    wilcoxon_p_val = scipy.stats.wilcoxon(list_of_vals_0, list_of_vals_1, alternative="two-sided").pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
 
     return mean_0, stdev_0, mean_1, stdev_1, ttest_p_val, wilcoxon_p_val
 
