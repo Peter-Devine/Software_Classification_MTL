@@ -12,6 +12,8 @@ from sklearn.metrics import fbeta_score, precision_score, recall_score, accuracy
 
 from xgboost import XGBClassifier
 
+import numpy as np
+
 import pandas as pd
 from functools import partial
 import time
