@@ -159,6 +159,8 @@ class BaselineModels:
             task.valid_df["baseline_label"] = task.valid_df.label
             best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=task.train_df, valid_df=task.valid_df, test_df=None, is_multiclass=False)
 
+            zero_shot_results[task_name] = {}
+
             for test_task_name, test_task in test_task_dict.items():
                 zero_shot_results[task_name][test_task_name] = self.get_zero_shot_result_given_model(task.train_df, task.valid_df, test_task.test_df, best_results, zero_shot_label=zero_shot_label)
 
