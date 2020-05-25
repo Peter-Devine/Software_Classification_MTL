@@ -115,8 +115,8 @@ class NeptuneLogger:
         bar_list = []
 
         for i, run_type in enumerate(run_types):
-            # We make the offset of the bars proportional to the number of series in the data. More series means we need a greater min.max offset.
-            bar_offset = i - (len(run_types)/2) + 0.5
+            # We offset the bars so that all series of data for one given test dataset take up less than 1 unit of space
+            bar_offset = (i/(1.5*len(run_types))) - 0.5
 
             # Plot a bar for all run types for each dataset, with the error for each dataset
             bar_list.append(ax0.bar(x+bar_offset, df[f"{run_type} average F1"], width=width, align='center', yerr=df[f"{run_type} average F1 stdev"]))
