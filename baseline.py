@@ -8,7 +8,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
+from sklearn.metrics import fbeta_score, precision_score, recall_score, accuracy_score
 
 from xgboost import XGBClassifier
 
@@ -76,10 +76,14 @@ class BaselineModels:
 
         self.metrics = {
             "accuracy": accuracy_score,
-            "f1": f1_score,
-            "average f1": partial(f1_score, average="macro"),
-            "precision": precision_score,
-            "recall": recall_score
+            "f1": partial(fbeta_score, beta=1, average=None),
+            "f2": partial(fbeta_score, beta=2, average=None),
+            "precision": partial(precision_score, average=None),
+            "recall": partial(recall_score, average=None),
+            "average f1": partial(fbeta_score, beta=1, average="macro"),
+            "average f2": partial(fbeta_score, beta=2, average="macro"),
+            "average precision": partial(precision_score, average="macro"),
+            "average recall": partial(recall_score, average="macro"),
         }
 
     # Gets the zero-shot ability of classical models trained on all datasets save one
@@ -188,23 +192,15 @@ class BaselineModels:
 
     def get_metrics_from_preds(self, golds, preds, is_multiclass, binarizer=None):
         metrics_results = {}
-        for metric_name, metric_fn in self.metrics.items():
 
-            # If we are doing multiclass classification, then we want the f1 score for all classes.
-            # If we are doing binary, then we do not want the 0 and the 1 f1 score, just the 1 f1 score.
-            if metric_name in ["f1", "precision", "recall"]:
-                if not is_multiclass:
-                    applied_metric_fn = partial(metric_fn, average="binary")
-                else:
-                    applied_metric_fn = partial(metric_fn, average=None)
-            else:
-                applied_metric_fn = metric_fn
+        # Cycle through all metrics, getting the metric given golds, preds for each and saving said result
+        for metric_name, metric_fn in self.metrics.items():
 
             if is_multiclass:
                 assert binarizer is not None, "Multiclass metrics requested without binarizer passed."
-                score = applied_metric_fn(binarizer.transform(golds), binarizer.transform(preds))
+                score = metric_fn(binarizer.transform(golds), binarizer.transform(preds))
             else:
-                score = applied_metric_fn(golds, preds)
+                score = metric_fn(golds, preds)
 
             metrics_results[metric_name] = score
 
