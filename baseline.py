@@ -51,11 +51,11 @@ class BaselineModels:
             "Decision tree classifier max_depth 5 criterion entropy": partial(DecisionTreeClassifier, random_state=random_state, max_depth=5, criterion="entropy"),
             "Decision tree classifier max_depth 10 criterion entropy": partial(DecisionTreeClassifier, random_state=random_state, max_depth=10, criterion="entropy"),
             "Decision tree classifier max_depth 20 criterion entropy": partial(DecisionTreeClassifier, random_state=random_state, max_depth=20, criterion="entropy"),
-            "Support vector classifier C 0.1": partial(SVC, random_state=random_state, C=0.1, probability=True),
-            "Support vector classifier C 0.5": partial(SVC, random_state=random_state, C=0.5, probability=True),
-            "Support vector classifier C 1": partial(SVC, random_state=random_state, C=1, probability=True),
-            "Support vector classifier C 2": partial(SVC, random_state=random_state, C=2, probability=True),
-            "Support vector classifier C 5": partial(SVC, random_state=random_state, C=5, probability=True),
+            "Support vector classifier C 0.1": partial(SVC, random_state=random_state, C=0.1),
+            "Support vector classifier C 0.5": partial(SVC, random_state=random_state, C=0.5),
+            "Support vector classifier C 1": partial(SVC, random_state=random_state, C=1),
+            "Support vector classifier C 2": partial(SVC, random_state=random_state, C=2),
+            "Support vector classifier C 5": partial(SVC, random_state=random_state, C=5),
             "Gradient boosting classifier max_depth 1 subsample 1": partial(GradientBoostingClassifier, random_state=random_state, max_depth=1, subsample=1),
             "Gradient boosting classifier max_depth 1 subsample 0.5": partial(GradientBoostingClassifier, random_state=random_state, max_depth=1, subsample=0.5),
             "Gradient boosting classifier max_depth 1 subsample 0.1": partial(GradientBoostingClassifier, random_state=random_state, max_depth=1, subsample=0.1),
@@ -148,25 +148,7 @@ class BaselineModels:
         zero_shot_df = pd.DataFrame({"text": df.text, "baseline_label": df_labels})
         return zero_shot_df
 
-    # Gets the zero-shot ability of classical models trained on a given dataset
-    # We train the model on one task's train/validation set and test on another task's test set
-    # We then map both dataset's label sets to a given label (E.g. Bug/ No bug) as a list of booleans
-    def get_zero_shot_baselines(self, train_task_dict, test_task_dict, best_metric, zero_shot_label):
-        zero_shot_results = {}
-        for task_name, task in train_task_dict.items():
-            # We keep the labels the same for this baseline. In other words, we train a multiclass classifier for this zero-shot learning test, and convert the outputs later.
-            task.train_df["baseline_label"] = task.train_df.label
-            task.valid_df["baseline_label"] = task.valid_df.label
-            best_results, results = self.get_baseline_results(best_metric=best_metric, train_df=task.train_df, valid_df=task.valid_df, test_df=None, is_multiclass=False)
-
-            zero_shot_results[task_name] = {}
-
-            for test_task_name, test_task in test_task_dict.items():
-                zero_shot_results[task_name][test_task_name] = self.get_zero_shot_result_given_model(task.train_df, task.valid_df, test_task.test_df, best_results, zero_shot_label=zero_shot_label)
-
-        return zero_shot_results
-
-    def get_zero_shot_result_given_model(self, train_df, valid_df, test_df, best_results, zero_shot_label=None):
+    def get_zero_shot_result_given_model(self, train_df, valid_df, test_df, best_results):
         is_best_model_tfidf = best_results["best config"]["input type"] == "tfidf"
         train_X, valid_X, test_X = self.transform_text(train_df, valid_df, test_df, is_idf=is_best_model_tfidf)
 
@@ -176,20 +158,8 @@ class BaselineModels:
         # then we need to get the probabilities of the zero-shot label class, and then compare that probability to that of every other class.
         # Then, if the probability of that class is greater than the sum of the probabilities of every other class, then we predict that class.
         # If not, then we predict another class.
-        if zero_shot_label is not None:
-            zero_shot_class_index = [i for i, class_ in enumerate(best_model.classes_) if zero_shot_label in class_.lower()]
-            assert len(zero_shot_class_index) == 1, f"Multiple classes contain zero shot label. Looking for one instance of {zero_shot_label} within {best_model.classes_}"
-            zero_shot_class_index = zero_shot_class_index[0]
-
-            # Get the probabilities that the prediction is the in class zero shot label
-            test_preds = best_model.predict_proba(test_X)[:,zero_shot_class_index]
-            # We set the prediction that the label is the zero-shot class if its probability is greater than 0.5 (50%).
-            # Since this is a binary problem (zero-shot class or NOT zero-shot class), a threshold of 50% probability is appropriate to choose 1 class between 2.
-            test_preds = np.array([pred >= 0.5 for pred in test_preds])
-            test_golds = np.array([zero_shot_label in gold.lower() for gold in test_df.label])
-        else:
-            test_preds = best_model.predict(test_X)
-            test_golds = test_df.baseline_label
+        test_preds = best_model.predict(test_X)
+        test_golds = test_df.baseline_label
 
         zero_shot_result = self.get_metrics_from_preds(test_golds, test_preds, is_multiclass=False)
         return zero_shot_result
