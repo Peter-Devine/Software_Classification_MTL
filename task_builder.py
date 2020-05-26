@@ -65,7 +65,7 @@ class TaskBuilder:
         def bin_df():
             train, valid, test = df_fn()
 
-            label_binarizer = lambda x: bin_label if bin_label.lower() in x.lower() else f"Not_{bin_label}"
+            label_binarizer = lambda x: bin_label if bin_label.lower() in x.lower() else f"other"
             train["label"] = train["label"].apply(label_binarizer)
             valid["label"] = valid["label"].apply(label_binarizer)
             test["label"] = test["label"].apply(label_binarizer)
