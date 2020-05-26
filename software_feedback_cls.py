@@ -97,15 +97,15 @@ if args.do_classical:
     if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
         #zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
         mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
-        logger.log_dict("Zero shot results (classical)", zero_shot_results)
+        # logger.log_dict("Zero shot results (classical)", zero_shot_results)
         logger.log_dict("MTL zero shot results (classical)", mtl_zero_shot_results)
 
         if args.output_text:
             dataset_string = "__".join(dataset_list)
-            logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_zero_shot_classical_baselines.json", zero_shot_results)
+            #logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_zero_shot_classical_baselines.json", zero_shot_results)
             logger.log_json(f"{dataset_string}_{PARAMS.random_state}_{run_type}_mtl_zero_shot_classical_baselines.json", mtl_zero_shot_results)
 
-        del zero_shot_results, mtl_zero_shot_results
+        del mtl_zero_shot_results, #zero_shot_results
 
     del baseline_models, best_classical_result, all_classical_results
 
