@@ -95,7 +95,7 @@ if args.do_classical:
 
     # Run classical zero-shot learning on all datasets if we have a designated set of test tasks, the run out of domain (zero shot) evaluation on classical models
     if len(PARAMS.zero_shot_label) > 0 and len(test_task_dict.keys()) > 0:
-        zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
+        #zero_shot_results = baseline_models.get_zero_shot_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
         mtl_zero_shot_results = baseline_models.get_MTL_baselines(task_dict, test_task_dict, PARAMS.best_metric, PARAMS.zero_shot_label)
         logger.log_dict("Zero shot results (classical)", zero_shot_results)
         logger.log_dict("MTL zero shot results (classical)", mtl_zero_shot_results)
