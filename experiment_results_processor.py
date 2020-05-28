@@ -160,8 +160,8 @@ def get_outdomain_single_task_results(results_dict, logger):
             "Classical binary in-domain average F1 stdev": classical_bin_id_sd,
             "Classical binary zero-shot average F1": classical_bin_zs_avg,
             "Classical binary zero-shot average F1 stdev": classical_bin_zs_sd,
-            "Zero-shot binary T-test p val": zs_bin_ttest_p_val,
-            "Zero-shot binary Wilcoxon p val": zs_bin_wilcoxon_p_val,
+            "Zero-shot T-test p val": zs_bin_ttest_p_val,
+            "Zero-shot Wilcoxon p val": zs_bin_wilcoxon_p_val,
         })
 
     zero_shot_results_df = pd.DataFrame(zero_shot_results, index=dnn_run_values.keys())

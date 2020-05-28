@@ -233,7 +233,7 @@ class NeptuneLogger:
         zero_shot_results_df, dnn_all_zero_shot_results, classical_all_zero_shot_results = get_outdomain_single_task_results(results_dict, self)
 
         # Make a bar chart comparing the in and out of domain performance of models for both classical and DNN models.
-        graph_path = self.save_avg_f1_graph(zero_shot_results_df, experiment_name, run_types = ["DNN in-domain", "DNN zero-shot", "Classical binary in-domain", "Classical binary zero-shot"], p_val_column="Zero-shot binary")
+        graph_path = self.save_avg_f1_graph(zero_shot_results_df, experiment_name, run_types = ["DNN in-domain", "Classical binary in-domain", "DNN zero-shot", "Classical binary zero-shot"], p_val_column="Zero-shot")
 
         # Save the comparison bar chart
         self.log_image(f"{experiment_name} graphical results", graph_path)
