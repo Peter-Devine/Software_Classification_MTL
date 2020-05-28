@@ -74,7 +74,6 @@ def get_indomain_single_task_results(results_dict, logger):
 
 def get_outdomain_single_task_results(results_dict, logger):
     # Logs the average average f1 for each dataset over the x number of runs from different random seeds
-    #classical_results_names = [run_name for run_name in results_dict.keys() if "single_task_zero_shot_classical_baselines" in run_name]
     classical_binary_results_names = [run_name for run_name in results_dict.keys() if "single_task_mtl_zero_shot_classical_baselines" in run_name]
     ft_results_names = [run_name for run_name in results_dict.keys() if "single_task_zero_shot_test_metrics" in run_name]
 
@@ -82,37 +81,15 @@ def get_outdomain_single_task_results(results_dict, logger):
     dataset_names = sorted(list(set(["_".join(run_name.replace("_single_task_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_results_names])))
 
     # Make a dictionary that holds a list of values for each test dataset
-    # classical_run_values = {}
     classical_binary_run_values = {}
     dnn_run_values = {}
 
     for i, dataset in enumerate(dataset_names):
 
-        #classical_dataset_runs = sorted([run_name for run_name in classical_results_names if dataset in run_name])
         classical_binary_dataset_runs = sorted([run_name for run_name in classical_binary_results_names if dataset in run_name])
         dnn_dataset_runs = sorted([run_name for run_name in ft_results_names if dataset in run_name])
 
-        #for dnn_dataset_run, classical_dataset_run, classical_bin_dataset_run in zip(dnn_dataset_runs, classical_dataset_runs, classical_binary_dataset_runs):
-
         for dnn_dataset_run, classical_bin_dataset_run in zip(dnn_dataset_runs, classical_binary_dataset_runs):
-
-            # ##### CLASSICAL #######
-            #
-            # # First, we get the dict of classical results for the model that has been trained on dataset
-            # classical_zero_shot_results = results_dict[classical_dataset_run][dataset]
-            #
-            # for test_dataset_name, test_dataset_results in classical_zero_shot_results.items():
-            #     # Initialize the test dataset results list if it hasn't been initialized
-            #     if test_dataset_name not in classical_run_values.keys():
-            #         classical_run_values[test_dataset_name] = {}
-            #         for train_dataset in dataset_names:
-            #             classical_run_values[test_dataset_name][train_dataset] = []
-            #
-            #     target_value = test_dataset_results["average f1"]
-            #
-            #     logger.log_metric(f"classical zero shot {test_dataset_name}", i, target_value)
-            #     classical_run_values[test_dataset_name][dataset].append(target_value)
-
 
             ##### CLASSICAL BINARY ######
 
@@ -165,38 +142,26 @@ def get_outdomain_single_task_results(results_dict, logger):
         # Get a long list of all the target values for every run of every training set
         for train_task_name in dnn_run_values[test_task_name].keys():
             if train_task_name == test_task_name:
-                # classical_in_domain_vals = classical_run_values[test_task_name][train_task_name]
                 classical_bin_in_domain_vals =  classical_binary_run_values[test_task_name][train_task_name]
                 dnn_in_domain_vals = dnn_run_values[test_task_name][train_task_name]
             else:
-                # classical_zero_shot_vals.extend(classical_run_values[test_task_name][train_task_name])
                 classical_bin_zero_shot_vals.extend(classical_binary_run_values[test_task_name][train_task_name])
                 dnn_zero_shot_vals.extend(dnn_run_values[test_task_name][train_task_name])
 
-        # classical_zs_avg, classical_zs_sd, dnn_zs_avg, dnn_zs_sd, zs_ttest_p_val, zs_wilcoxon_p_val = get_stats_for_two_lists(classical_zero_shot_vals, dnn_zero_shot_vals)
-        # classical_id_avg, classical_id_sd, dnn_id_avg, dnn_id_sd, id_ttest_p_val, id_wilcoxon_p_val = get_stats_for_two_lists(classical_in_domain_vals, dnn_in_domain_vals)
         classical_bin_zs_avg, classical_bin_zs_sd, dnn_zs_avg, dnn_zs_sd, zs_bin_ttest_p_val, zs_bin_wilcoxon_p_val = get_stats_for_two_lists(classical_bin_zero_shot_vals, dnn_zero_shot_vals)
         classical_bin_id_avg, classical_bin_id_sd, dnn_id_avg, dnn_id_sd, id_bin_ttest_p_val, id_bin_wilcoxon_p_val = get_stats_for_two_lists(classical_bin_in_domain_vals, dnn_in_domain_vals)
 
         zero_shot_results.append({
-            # "Classical zero-shot average F1": classical_zs_avg,
             "DNN zero-shot average F1": dnn_zs_avg,
-            # "Classical zero-shot average F1 stdev": classical_zs_sd,
             "DNN zero-shot average F1 stdev": dnn_zs_sd,
-            # "Zero-shot T-test p val": zs_ttest_p_val,
-            # "Zero-shot Wilcoxon p val": zs_wilcoxon_p_val,
-            # "Classical in-domain average F1": classical_id_avg,
             "DNN in-domain average F1": dnn_id_avg,
-            # "Classical in-domain average F1 stdev": classical_id_sd,
             "DNN in-domain average F1 stdev": dnn_id_sd,
-            # "In-domain T-test p val": id_ttest_p_val,
-            # "In-domain Wilcoxon p val": id_wilcoxon_p_val,
             "Classical binary in-domain average F1": classical_bin_id_avg,
             "Classical binary in-domain average F1 stdev": classical_bin_id_sd,
             "Classical binary zero-shot average F1": classical_bin_zs_avg,
             "Classical binary zero-shot average F1 stdev": classical_bin_zs_sd,
-            "Zero-shot binary T-test p val": classical_bin_zs_avg,
-            "Zero-shot binary Wilcoxon p val": classical_bin_zs_sd,
+            "Zero-shot binary T-test p val": zs_bin_ttest_p_val,
+            "Zero-shot binary Wilcoxon p val": zs_bin_wilcoxon_p_val,
         })
 
     zero_shot_results_df = pd.DataFrame(zero_shot_results, index=dnn_run_values.keys())
