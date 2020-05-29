@@ -170,3 +170,134 @@ def get_outdomain_single_task_results(results_dict, logger):
     classical_bin_all_zero_shot_results = pd.DataFrame(classical_binary_run_values).applymap(lambda x: statistics.mean(x))
 
     return zero_shot_results_df, dnn_all_zero_shot_results, classical_bin_all_zero_shot_results
+
+
+
+def get_outdomain_mtl_results(results_dict, logger):
+    # Logs the average average f1 for each dataset over the x number of runs from different random seeds
+    classical_binary_results_names = [run_name for run_name in results_dict.keys() if "multi_task_mtl_zero_shot_classical_baselines" in run_name]
+    ft_results_names = [run_name for run_name in results_dict.keys() if "multi_task_zero_shot_test_metrics" in run_name]
+
+    # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
+    dataset_names = sorted(list(set(["_".join(run_name.replace("_multi_task_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_results_names])))
+
+    # Make a dictionary that holds a list of values for each test dataset
+    classical_binary_run_values = {}
+    dnn_run_values = {}
+
+    # Get MTL results first
+    for i, dataset in enumerate(dataset_names):
+
+        classical_binary_dataset_runs = sorted([run_name for run_name in classical_binary_results_names if dataset in run_name])
+        dnn_dataset_runs = sorted([run_name for run_name in ft_results_names if dataset in run_name])
+
+        for dnn_dataset_run, classical_bin_dataset_run in zip(dnn_dataset_runs, classical_binary_dataset_runs):
+
+            ##### CLASSICAL BINARY ######
+
+            classical_bin_zero_shot_results = results_dict[classical_bin_dataset_run]
+
+            for test_dataset_name, test_dataset_results in classical_bin_zero_shot_results.items():
+                # Initialize the test dataset results list if it hasn't been initialized
+                if test_dataset_name not in classical_binary_run_values.keys():
+                    classical_binary_run_values[test_dataset_name] = {}
+                # If we do not have an entry for the training dataset in the given test set in our dict-in-a-dict, we generate one and make it an empty list
+                if dataset not in classical_binary_run_values[test_dataset_name].keys():
+                    classical_binary_run_values[test_dataset_name][dataset] = []
+
+                target_value = test_dataset_results["average f1"]
+
+                logger.log_metric(f"classical binary zero shot {test_dataset_name}", i, target_value)
+                classical_binary_run_values[test_dataset_name][dataset].append(target_value)
+
+            ##### DNN #####
+
+            # We get the dict of DNN results for the model that has been trained on dataset
+            dnn_zero_shot_results = results_dict[dnn_dataset_run][dataset]
+
+            for test_dataset_name, test_dataset_results in dnn_zero_shot_results.items():
+                # Initialize the test dataset results list if it hasn't been initialized
+                if test_dataset_name not in dnn_run_values.keys():
+                    dnn_run_values[test_dataset_name] = {}
+                # If we do not have an entry for the training dataset in the given test set in our dict-in-a-dict, we generate one and make it an empty list
+                if dataset not in dnn_run_values[test_dataset_name].keys():
+                    dnn_run_values[test_dataset_name][dataset] = []
+
+                target_value = test_dataset_results["average f1"]
+
+                logger.log_metric(f"dnn zero shot {test_dataset_name}", i, target_value)
+                dnn_run_values[test_dataset_name][dataset].append(target_value)
+
+    # Then get single task results
+    ft_single_task_results_names = [run_name for run_name in results_dict.keys() if "single_task_zero_shot_test_metrics" in run_name]
+
+    # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
+    dataset_names = sorted(list(set(["_".join(run_name.replace("_single_task_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_results_names])))
+
+    # Make a dictionary that holds a list of values for each test dataset
+    dnn_st_run_values = {}
+
+    # Get MTL results first
+    for i, dataset in enumerate(dataset_names):
+
+        dnn_st_dataset_runs = sorted([run_name for run_name in ft_single_task_results_names if dataset in run_name])
+
+        for dnn_st_dataset_run in dnn_st_dataset_runs:
+
+            ##### DNN single task #####
+
+            # We get the dict of DNN results for the model that has been trained on dataset
+            dnn_zero_shot_results = results_dict[dnn_st_dataset_run][dataset]
+
+            for test_dataset_name, test_dataset_results in dnn_zero_shot_results.items():
+                # Initialize the test dataset results list if it hasn't been initialized
+                if test_dataset_name not in dnn_st_run_values.keys():
+                    dnn_st_run_values[test_dataset_name] = {}
+                if dataset not in dnn_st_run_values[test_dataset_name].keys():
+                    dnn_st_run_values[test_dataset_name][dataset] = []
+
+                target_value = test_dataset_results["average f1"]
+
+                logger.log_metric(f"dnn zero shot {test_dataset_name}", i, target_value)
+                dnn_st_run_values[test_dataset_name][dataset].append(target_value)
+
+    # Make sure that we have zero-shot test results for the same datasets in both DNN and classical results
+    assert all([x in dnn_run_values.keys() for x in classical_binary_run_values.keys()]) , f"Unaligned test datasets detected. DNN:\n{dnn_run_values.keys()}\n\nClassical binary:\n{classical_binary_run_values.keys()}"
+    assert all([x in dnn_run_values.keys() for x in dnn_st_run_values.keys()]) , f"Unaligned test datasets detected. DNN:\n{dnn_run_values.keys()}\n\nST DNN:\n{dnn_st_run_values.keys()}"
+
+
+    zero_shot_results = []
+    # Get all the results of zero-shot
+    for test_task_name in dnn_run_values.keys():
+
+        classical_bin_zero_shot_vals = []
+        dnn_zero_shot_vals = []
+        dnn_st_zero_shot_vals = []
+
+        # Get a long list of all the target values for every run of every training set
+        for train_task_name in dnn_run_values[test_task_name].keys():
+            if train_task_name != test_task_name:
+                classical_bin_zero_shot_vals.extend(classical_binary_run_values[test_task_name][train_task_name])
+                dnn_zero_shot_vals.extend(dnn_run_values[test_task_name][train_task_name])
+                dnn_st_zero_shot_vals.extend(dnn_st_run_values[test_task_name][train_task_name])
+
+        classical_bin_zs_avg, classical_bin_zs_sd, dnn_zs_avg, dnn_zs_sd, zs_bin_ttest_p_val, zs_bin_wilcoxon_p_val = get_stats_for_two_lists(classical_bin_zero_shot_vals, dnn_zero_shot_vals)
+        dnn_st_zs_avg, dnn_st_zs_sd, _, _, zs_st_mtl_dnn_ttest_p_val, zs_st_mtl_dnn_wilcoxon_p_val = get_stats_for_two_lists(dnn_st_zero_shot_vals, dnn_zero_shot_vals)
+
+        zero_shot_results.append({
+            "DNN MTL zero-shot average F1": dnn_zs_avg,
+            "DNN MTL zero-shot average F1 stdev": dnn_zs_sd,
+            "Classical MTL binary zero-shot average F1": classical_bin_zs_avg,
+            "Classical MTL binary zero-shot average F1 stdev": classical_bin_zs_sd,
+            "DNN single-task zero-shot average F1": dnn_st_zs_avg,
+            "DNN single-task zero-shot average F1 stdev": dnn_st_zs_sd,
+            "Zero-shot T-test p val": zs_bin_ttest_p_val,
+            "Zero-shot Wilcoxon p val": zs_bin_wilcoxon_p_val,
+        })
+
+    zero_shot_results_df = pd.DataFrame(zero_shot_results, index=dnn_run_values.keys())
+
+    dnn_all_zero_shot_results = pd.DataFrame(dnn_run_values).applymap(lambda x: statistics.mean(x))
+    classical_bin_all_zero_shot_results = pd.DataFrame(classical_binary_run_values).applymap(lambda x: statistics.mean(x))
+
+    return zero_shot_results_df, dnn_all_zero_shot_results, classical_bin_all_zero_shot_results
