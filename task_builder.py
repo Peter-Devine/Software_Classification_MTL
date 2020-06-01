@@ -1,4 +1,4 @@
-import requests, zipfile, io, os, json, shutil
+import requests, zipfile, io, os, json, shutil, time
 from io import StringIO
 import sqlite3
 import pandas as pd
@@ -89,11 +89,20 @@ class TaskBuilder:
 
     def get_maalej_2016(self):
         task_data_path = os.path.join(self.data_path, "maalej_2016")
-        # from https://mast.informatik.uni-hamburg.de/wp-content/uploads/2015/06/review_classification_preprint.pdf
-        # Bug Report, Feature Request, or Simply Praise? On Automatically Classifying App Reviews
-        r = requests.get("https://mast.informatik.uni-hamburg.de/wp-content/uploads/2014/03/REJ_data.zip")
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        z.extractall(path = task_data_path)
+
+        # Sometimes, retrieving the Maalej dataset results in not getting the zip file, which will be a rate limiting atrifact. So we simply catch any errors and sleep for 10 mins before retrying.
+        try:
+            # from https://mast.informatik.uni-hamburg.de/wp-content/uploads/2015/06/review_classification_preprint.pdf
+            # Bug Report, Feature Request, or Simply Praise? On Automatically Classifying App Reviews
+            r = requests.get("https://mast.informatik.uni-hamburg.de/wp-content/uploads/2014/03/REJ_data.zip")
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            z.extractall(path = task_data_path)
+        except Exception as err:
+            print(f"The following error has been thrown when trying to retreive the Maalej 2016 dataset from mast.informatik.uni-hamburg.de:\n\n{err}\n\nResponse from trying to reach website was:\n{r.content}")
+            print(f"Now sleeping for 10 mins and then retrying (N.B. unlimited retries)")
+            time.sleep(600)
+            return self.get_maalej_2016()
+
 
         json_path = os.path.join(task_data_path, "REJ_data", "all.json")
 
