@@ -245,7 +245,19 @@ class NeptuneLogger:
 
 
     def log_experiment_3(self, results_dict, experiment_name):
-        raise Exception(f"Experiment 3 output not yet implemented")
+        # Get the df for averaged zero shot performance across all training tasks
+        # Also get the complete results for zero-shot learning
+        mtl_zero_shot_results_df, mtl_dnn_all_zero_shot_results, mtl_classical_bin_all_zero_shot_results = get_outdomain_single_task_results(results_dict, self)
+
+        graph_path = self.save_avg_f1_graph(mtl_zero_shot_results_df, experiment_name, run_types = ["DNN MTL zero-shot", "Classical MTL binary zero-shot", "DNN single-task zero-shot"], p_val_column="DNN Zero-shot")
+
+        # Save the comparison bar chart
+        self.log_image(f"{experiment_name} graphical results", graph_path)
+
+        # Output the full datasets of how each training set interacts with each test set for both classical and DNN
+        self.log_dataframe("Experiment 3 Classical results df", mtl_classical_bin_all_zero_shot_results)
+        self.log_dataframe("Experiment 3 DNN results df", mtl_dnn_all_zero_shot_results)
+        self.log_dataframe("Experiment 3 aggregated results", mtl_zero_shot_results_df)
 
     def log_experiment_4(self, results_dict, experiment_name):
         raise Exception(f"Experiment 4 output not yet implemented")

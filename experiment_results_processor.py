@@ -180,6 +180,9 @@ def get_outdomain_mtl_results(results_dict, logger):
 
     # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
     dataset_names = sorted(list(set(["_".join(run_name.replace("_multi_task_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_results_names])))
+    # Separate dataset names as MTL runs have all names in results file name concatenated by "__"
+    dataset_names = [x.split("__") for x in dataset_names]
+    dataset_names = list(set([item for sublist in dataset_names for item in sublist]))
 
     # Make a dictionary that holds a list of values for each test dataset
     classical_binary_run_values = {}
@@ -237,7 +240,7 @@ def get_outdomain_mtl_results(results_dict, logger):
     # Make a dictionary that holds a list of values for each test dataset
     dnn_st_run_values = {}
 
-    # Get MTL results first
+    # Get single task results for comparison to MTL results
     for i, dataset in enumerate(dataset_names):
 
         dnn_st_dataset_runs = sorted([run_name for run_name in ft_single_task_results_names if dataset in run_name])
@@ -291,8 +294,8 @@ def get_outdomain_mtl_results(results_dict, logger):
             "Classical MTL binary zero-shot average F1 stdev": classical_bin_zs_sd,
             "DNN single-task zero-shot average F1": dnn_st_zs_avg,
             "DNN single-task zero-shot average F1 stdev": dnn_st_zs_sd,
-            "Zero-shot T-test p val": zs_bin_ttest_p_val,
-            "Zero-shot Wilcoxon p val": zs_bin_wilcoxon_p_val,
+            "DNN Zero-shot T-test p val": zs_st_mtl_dnn_ttest_p_val,
+            "DNN Zero-shot Wilcoxon p val": zs_st_mtl_dnn_wilcoxon_p_val,
         })
 
     zero_shot_results_df = pd.DataFrame(zero_shot_results, index=dnn_run_values.keys())
