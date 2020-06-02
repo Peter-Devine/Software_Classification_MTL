@@ -201,6 +201,12 @@ def get_outdomain_mtl_results(results_dict, logger):
             classical_bin_zero_shot_results = results_dict[classical_bin_dataset_run]
 
             for test_dataset_name, test_dataset_results in classical_bin_zero_shot_results.items():
+                # Since we only want in-domain (Trained on A, tested on A) and out-of-domain (trained on A, tested on X)
+                # We seek to avoid semi-in-domain results whereby the model has been trained on B during the pre-training MTL period,
+                # before being fine-tuned on A and then tested on B.
+                if test_dataset_name in classical_bin_dataset_run and dataset != test_dataset_name:
+                    continue
+
                 # Initialize the test dataset results list if it hasn't been initialized
                 if test_dataset_name not in classical_binary_run_values.keys():
                     classical_binary_run_values[test_dataset_name] = {}
@@ -219,6 +225,12 @@ def get_outdomain_mtl_results(results_dict, logger):
             dnn_zero_shot_results = results_dict[dnn_dataset_run][dataset]
 
             for test_dataset_name, test_dataset_results in dnn_zero_shot_results.items():
+                # Since we only want in-domain (Trained on A, tested on A) and out-of-domain (trained on A, tested on X)
+                # We seek to avoid semi-in-domain results whereby the model has been trained on B during the pre-training MTL period,
+                # before being fine-tuned on A and then tested on B.
+                if test_dataset_name in dnn_dataset_run and dataset != test_dataset_name:
+                    continue
+
                 # Initialize the test dataset results list if it hasn't been initialized
                 if test_dataset_name not in dnn_run_values.keys():
                     dnn_run_values[test_dataset_name] = {}
