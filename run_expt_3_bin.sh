@@ -14,7 +14,7 @@ for dataset in ${datasets[@]}; do
 		export excluded_datasets=${all_datasets//$dataset,/}
 		$excluded_datasets=${excluded_datasets//,$dataset/}
 
-	  python software_feedback_cls.py --dataset_list=$excluded_datasets --random_state=$random_state --zero_shot_label=bug --zero_shot_dataset_list=$all_datasets --output_text --do_classical --num_epochs=60 --num_fine_tuning_epochs=60 --early_stopping_patience=10 --batch_size_train=32 --batch_size_eval=32 --max_length=128 --neptune_username=$1
+	  python software_feedback_cls.py --dataset_list=$excluded_datasets --random_state=$random_state --zero_shot_label=bug --zero_shot_dataset_list=$all_datasets --output_text --do_classical_zero_shot --num_epochs=60 --num_fine_tuning_epochs=60 --early_stopping_patience=10 --batch_size_train=32 --batch_size_eval=32 --max_length=128 --neptune_username=$1
 	done
 done
 
