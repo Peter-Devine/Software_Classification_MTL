@@ -1,18 +1,18 @@
-datasets=(jha_bug_bin_2017 scalabrino_bug_bin_2017 maalej_bug_bin_2016 williams_bug_bin_2017 di_sorbo_bug_bin_2017 guzman_bug_bin_2015 tizard_bug_bin_2019)
-random_states=(1 2 3 4 5 6 7 8 9 10)
+export datasets=(jha_bug_bin_2017 scalabrino_bug_bin_2017 maalej_bug_bin_2016 williams_bug_bin_2017 di_sorbo_bug_bin_2017 guzman_bug_bin_2015 tizard_bug_bin_2019)
+export random_states=(1 2 3 4 5 6 7 8 9 10)
 
 export NEPTUNE_API_TOKEN=$2
 
-all_datasets=jha_bug_bin_2017,scalabrino_bug_bin_2017,maalej_bug_bin_2016,williams_bug_bin_2017,di_sorbo_bug_bin_2017,guzman_bug_bin_2015,tizard_bug_bin_2019
+export all_datasets=jha_bug_bin_2017,scalabrino_bug_bin_2017,maalej_bug_bin_2016,williams_bug_bin_2017,di_sorbo_bug_bin_2017,guzman_bug_bin_2015,tizard_bug_bin_2019
 
 for dataset in ${datasets[@]}; do
 	# Run experiment 3 on all datasets for 10 different random seeds
 	for random_state in ${random_states[@]}; do
 
-		echo "Now running dataset $all_datasets with zero_shot_datasets $all_datasets in random state $random_state"
-
 		export excluded_datasets=${all_datasets//$dataset,/}
-		$excluded_datasets=${excluded_datasets//,$dataset/}
+		export excluded_datasets=${excluded_datasets//,$dataset/}
+
+		echo "Now running dataset $excluded_datasets with zero_shot_datasets $all_datasets in random state $random_state"
 
 	  python software_feedback_cls.py --dataset_list=$excluded_datasets --random_state=$random_state --zero_shot_label=bug --zero_shot_dataset_list=$all_datasets --output_text --do_classical_zero_shot --num_epochs=60 --num_fine_tuning_epochs=60 --early_stopping_patience=10 --batch_size_train=32 --batch_size_eval=32 --max_length=128 --neptune_username=$1
 	done
