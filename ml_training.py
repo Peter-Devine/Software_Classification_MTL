@@ -107,24 +107,25 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
         for task_name, task in task_dict.items():
             torch.cuda.empty_cache()
 
-            task.model.eval()
+            with torch.no_grad():
+                task.model.eval()
 
-            if is_patience_exceeded(task_name):
-                print(f"{task_name} patience exceeded, ceasing evaluation on this task")
-                continue
+                if is_patience_exceeded(task_name):
+                    print(f"{task_name} patience exceeded, ceasing evaluation on this task")
+                    continue
 
-            validation_results = task_eval_engines[task_name].run(task.valid_data).metrics
-            logger.log_results(run_type_log_prefix + task_name, "valid", epoch, validation_results)
+                validation_results = task_eval_engines[task_name].run(task.valid_data).metrics
+                logger.log_results(run_type_log_prefix + task_name, "valid", epoch, validation_results)
 
-            # What metric will we compare all previous performance against
-            comparison_metric = validation_results[PARAMS.best_metric]
+                # What metric will we compare all previous performance against
+                comparison_metric = validation_results[PARAMS.best_metric]
 
-            if comparison_metric > max(task_eval_metrics[task_name]):
-                model_saver.save_model(file_name=task_name, model=task.model)
-                epochs_since_last_best[task_name] = 0
-            else:
-                epochs_since_last_best[task_name] += 1
-            task_eval_metrics[task_name].append(comparison_metric)
+                if comparison_metric > max(task_eval_metrics[task_name]):
+                    model_saver.save_model(file_name=task_name, model=task.model)
+                    epochs_since_last_best[task_name] = 0
+                else:
+                    epochs_since_last_best[task_name] += 1
+                task_eval_metrics[task_name].append(comparison_metric)
 
     train_time_end = time.time()
 
@@ -135,16 +136,17 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     for task_name, task in task_dict.items():
         torch.cuda.empty_cache()
 
-        task.model.eval()
+        with torch.no_grad():
+            task.model.eval()
 
-        model_saver.load_model(file_name=task_name, model=task.model)
+            model_saver.load_model(file_name=task_name, model=task.model)
 
-        test_engine = create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes, cpu=PARAMS.cpu)
-        test_results = test_engine.run(task.test_data).metrics
+            test_engine = create_eval_engine(model=task.model, is_multilabel=task.is_multilabel, n_classes=task.n_classes, cpu=PARAMS.cpu)
+            test_results = test_engine.run(task.test_data).metrics
 
-        task_test_metrics[task_name] = test_results
+            task_test_metrics[task_name] = test_results
 
-        epoch = 1 if is_fine_tuning else 0
-        logger.log_results(run_type_log_prefix + task_name, "test", epoch, test_results)
+            epoch = 1 if is_fine_tuning else 0
+            logger.log_results(run_type_log_prefix + task_name, "test", epoch, test_results)
 
     return task_eval_metrics, task_test_metrics
