@@ -105,6 +105,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
         # VALIDATE
         for task_name, task in task_dict.items():
+            torch.cuda.empty_cache()
+
             task.model.eval()
 
             if is_patience_exceeded(task_name):
@@ -124,8 +126,6 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
                 epochs_since_last_best[task_name] += 1
             task_eval_metrics[task_name].append(comparison_metric)
 
-            torch.cuda.empty_cache()
-
     train_time_end = time.time()
 
     task_eval_metrics["time_elapsed"] = train_time_end - train_time_start
@@ -133,6 +133,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
     # TEST
     task_test_metrics = {task_name: None for task_name, task in task_dict.items()}
     for task_name, task in task_dict.items():
+        torch.cuda.empty_cache()
+
         task.model.eval()
 
         model_saver.load_model(file_name=task_name, model=task.model)
@@ -144,7 +146,5 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
         epoch = 1 if is_fine_tuning else 0
         logger.log_results(run_type_log_prefix + task_name, "test", epoch, test_results)
-
-        torch.cuda.empty_cache()
 
     return task_eval_metrics, task_test_metrics

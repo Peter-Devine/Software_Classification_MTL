@@ -88,8 +88,10 @@ class LMZeroShot:
         for task_name, task in task_dict.items():
             lm_zero_shot_results[task_name] = {}
             for test_task_name, test_task in test_task_dict.items():
+                torch.cuda.empty_cache()
                 zero_shot_eval_engine = self.create_zero_shot_eval_engine(task.model, PARAMS.zero_shot_label, task.label_map, test_task.label_map, PARAMS.cpu)
 
                 lm_zero_shot_results[task_name][test_task_name] = zero_shot_eval_engine.run(test_task.test_data).metrics
+
 
         return lm_zero_shot_results
