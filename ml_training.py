@@ -53,6 +53,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
         model_saver.save_model(file_name=task_name, model=task.model)
 
     for epoch in range(epochs):
+        # Clean GPU cache
+        torch.cuda.empty_cache()
 
         # Reset iterable for each task and set model for training
         for task_name, task in task_dict.items():
@@ -89,9 +91,6 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
             task.optimizer.step()
             task.model.zero_grad()
 
-            # Moves the gaols back to the CPU from GPU if originally on GPU (else does nothing)
-            golds = y.cpu()
-
             logger.log_metric(f'{run_type_log_prefix} {task_name} - loss', x=task_steps[task_name], y=loss.item())
 
             # Only log overall loss when the tasks have a shared language model layer. During fine tuning, their models are no longer shared, making this metric useless.
@@ -101,6 +100,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
             step_num += 1
             task_steps[task_name] += 1
 
+            # Moves the golds and logits from the GPU
+            del golds, logits, loss
 
         # VALIDATE
         for task_name, task in task_dict.items():
@@ -123,6 +124,8 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
                 epochs_since_last_best[task_name] += 1
             task_eval_metrics[task_name].append(comparison_metric)
 
+            torch.cuda.empty_cache()
+
     train_time_end = time.time()
 
     task_eval_metrics["time_elapsed"] = train_time_end - train_time_start
@@ -141,5 +144,7 @@ def train_on_tasks(task_dict, PARAMS, logger, is_fine_tuning):
 
         epoch = 1 if is_fine_tuning else 0
         logger.log_results(run_type_log_prefix + task_name, "test", epoch, test_results)
+
+        torch.cuda.empty_cache()
 
     return task_eval_metrics, task_test_metrics

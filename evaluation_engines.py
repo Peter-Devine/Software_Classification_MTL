@@ -30,6 +30,8 @@ class TopK(Metric):
             self.top_k_values = top_k.values
             self.top_k_labels = concatenated_labels[top_k.indices]
 
+        del y_pred, y, output
+
     def compute(self):
         assert len(self.top_k_labels) == self.k, f"There are {self.top_k_labels} labels when there should be {self.k} labels when calculating top k labels"
         number_correct = (self.top_k_labels == self.label_idx_of_interest).sum()
@@ -77,6 +79,8 @@ class MulticlassPrecisionRecall(Metric):
             tn = int(((y_pred == 0) & (y == 0)).sum())
 
             self.class_count[i].update(fp=fp, fn=fn, tp=tp, tn=tn)
+
+        del y_pred_all, y_all, output
 
 class MulticlassPrecision(MulticlassPrecisionRecall):
     def __init__(self, output_transform=lambda x: x, n_classes=2, average=False):
@@ -191,8 +195,7 @@ def create_eval_engine(model, is_multilabel, n_classes, cpu):
 
   def process_function(engine, batch):
       X, y = batch
-      # pred = model(X.cuda())
-      # gold = y.cuda()
+
       if cpu:
           pred = model(X.cpu())
           gold = y.cpu()
