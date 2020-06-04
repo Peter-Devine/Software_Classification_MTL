@@ -1,5 +1,5 @@
 export datasets=(jha_bug_bin_2017 scalabrino_bug_bin_2017 maalej_bug_bin_2016 williams_bug_bin_2017 di_sorbo_bug_bin_2017 guzman_bug_bin_2015 tizard_bug_bin_2019)
-export random_states=(1 2 3 4 5 6 7 8 9 10)
+export random_states=(1 2 3 4 5)
 
 export NEPTUNE_API_TOKEN=$2
 
