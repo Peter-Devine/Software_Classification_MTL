@@ -14,7 +14,7 @@ for dataset in ${datasets[@]}; do
 
 		echo "Now running dataset $excluded_datasets with zero_shot_datasets $all_datasets in random state $random_state"
 
-	  python software_feedback_cls.py --dataset_list=$excluded_datasets --random_state=$random_state --zero_shot_label=bug --zero_shot_dataset_list=$all_datasets --output_text --do_classical_zero_shot --num_epochs=60 --num_fine_tuning_epochs=60 --early_stopping_patience=10 --batch_size_train=32 --batch_size_eval=32 --max_length=128 --neptune_username=$1
+	  python software_feedback_cls.py --dataset_list=$excluded_datasets --random_state=$random_state --zero_shot_label=bug --zero_shot_dataset_list=$all_datasets --output_text --do_classical_zero_shot --num_epochs=30 --num_fine_tuning_epochs=0 --early_stopping_patience=10 --batch_size_train=48 --batch_size_eval=48 --max_length=128 --neptune_username=$1
 	done
 done
 
