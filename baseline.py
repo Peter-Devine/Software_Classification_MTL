@@ -4,7 +4,7 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingClassifier, BaggingClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.preprocessing import LabelBinarizer
@@ -41,21 +41,19 @@ class BaselineModels:
             "Multinomial NB alpha 1": partial(MultinomialNB, alpha=1),
             "Multinomial NB alpha 2": partial(MultinomialNB, alpha=2),
             "Multinomial NB alpha 5": partial(MultinomialNB, alpha=5),
-            "Decision tree classifier max_depth None criterion gini": partial(DecisionTreeClassifier, random_state=random_state, max_depth=None, criterion="gini"),
             "Decision tree classifier max_depth 1 criterion gini": partial(DecisionTreeClassifier, random_state=random_state, max_depth=1, criterion="gini"),
             "Decision tree classifier max_depth 5 criterion gini": partial(DecisionTreeClassifier, random_state=random_state, max_depth=5, criterion="gini"),
             "Decision tree classifier max_depth 10 criterion gini": partial(DecisionTreeClassifier, random_state=random_state, max_depth=10, criterion="gini"),
             "Decision tree classifier max_depth 20 criterion gini": partial(DecisionTreeClassifier, random_state=random_state, max_depth=20, criterion="gini"),
-            "Decision tree classifier max_depth None criterion entropy": partial(DecisionTreeClassifier, random_state=random_state, max_depth=None, criterion="entropy"),
             "Decision tree classifier max_depth 1 criterion entropy": partial(DecisionTreeClassifier, random_state=random_state, max_depth=1, criterion="entropy"),
             "Decision tree classifier max_depth 5 criterion entropy": partial(DecisionTreeClassifier, random_state=random_state, max_depth=5, criterion="entropy"),
             "Decision tree classifier max_depth 10 criterion entropy": partial(DecisionTreeClassifier, random_state=random_state, max_depth=10, criterion="entropy"),
             "Decision tree classifier max_depth 20 criterion entropy": partial(DecisionTreeClassifier, random_state=random_state, max_depth=20, criterion="entropy"),
-            "Support vector classifier C 0.1": partial(SVC, random_state=random_state, C=0.1),
-            "Support vector classifier C 0.5": partial(SVC, random_state=random_state, C=0.5),
-            "Support vector classifier C 1": partial(SVC, random_state=random_state, C=1),
-            "Support vector classifier C 2": partial(SVC, random_state=random_state, C=2),
-            "Support vector classifier C 5": partial(SVC, random_state=random_state, C=5),
+            "Bagging support vector classifier C 0.1": partial(BaggingClassifier, base_estimator=partial(SVC, random_state=random_state, C=0.1), n_estimators=10, max_samples=0.1),
+            "Bagging support vector classifier C 0.5": partial(BaggingClassifier, base_estimator=partial(SVC, random_state=random_state, C=0.5), n_estimators=10, max_samples=0.1),
+            "Bagging support vector classifier C 1": partial(BaggingClassifier, base_estimator=partial(SVC, random_state=random_state, C=1), n_estimators=10, max_samples=0.1),
+            "Bagging support vector classifier C 2": partial(BaggingClassifier, base_estimator=partial(SVC, random_state=random_state, C=2), n_estimators=10, max_samples=0.1),
+            "Bagging support vector classifier C 5": partial(BaggingClassifier, base_estimator=partial(SVC, random_state=random_state, C=5), n_estimators=10, max_samples=0.1),
             "Gradient boosting classifier max_depth 1 subsample 1": partial(GradientBoostingClassifier, random_state=random_state, max_depth=1, subsample=1),
             "Gradient boosting classifier max_depth 1 subsample 0.5": partial(GradientBoostingClassifier, random_state=random_state, max_depth=1, subsample=0.5),
             "Gradient boosting classifier max_depth 1 subsample 0.1": partial(GradientBoostingClassifier, random_state=random_state, max_depth=1, subsample=0.1),
@@ -65,15 +63,15 @@ class BaselineModels:
             "Gradient boosting classifier max_depth 5 subsample 1": partial(GradientBoostingClassifier, random_state=random_state, max_depth=5, subsample=1),
             "Gradient boosting classifier max_depth 5 subsample 0.5": partial(GradientBoostingClassifier, random_state=random_state, max_depth=5, subsample=0.5),
             "Gradient boosting classifier max_depth 5 subsample 0.1": partial(GradientBoostingClassifier, random_state=random_state, max_depth=5, subsample=0.1),
-            "XG boosting classifier max_depth 1 subsample 1": partial(XGBClassifier, random_state=random_state, max_depth=1, subsample=1),
-            "XG boosting classifier max_depth 1 subsample 0.5": partial(XGBClassifier, random_state=random_state, max_depth=1, subsample=0.5),
-            "XG boosting classifier max_depth 1 subsample 0.1": partial(XGBClassifier, random_state=random_state, max_depth=1, subsample=0.1),
-            "XG boosting classifier max_depth 3 subsample 1": partial(XGBClassifier, random_state=random_state, max_depth=3, subsample=1),
-            "XG boosting classifier max_depth 3 subsample 0.5": partial(XGBClassifier, random_state=random_state, max_depth=3, subsample=0.5),
-            "XG boosting classifier max_depth 3 subsample 0.1": partial(XGBClassifier, random_state=random_state, max_depth=3, subsample=0.1),
-            "XG boosting classifier max_depth 6 subsample 1": partial(XGBClassifier, random_state=random_state, max_depth=6, subsample=1),
-            "XG boosting classifier max_depth 6 subsample 0.5": partial(XGBClassifier, random_state=random_state, max_depth=6, subsample=0.5),
-            "XG boosting classifier max_depth 6 subsample 0.1": partial(XGBClassifier, random_state=random_state, max_depth=6, subsample=0.1)
+            "XG boosting classifier max_depth 1 subsample 1": partial(XGBClassifier, random_state=random_state, max_depth=1, subsample=1, n_jobs=10),
+            "XG boosting classifier max_depth 1 subsample 0.5": partial(XGBClassifier, random_state=random_state, max_depth=1, subsample=0.5, n_jobs=10),
+            "XG boosting classifier max_depth 1 subsample 0.1": partial(XGBClassifier, random_state=random_state, max_depth=1, subsample=0.1, n_jobs=10),
+            "XG boosting classifier max_depth 3 subsample 1": partial(XGBClassifier, random_state=random_state, max_depth=3, subsample=1, n_jobs=10),
+            "XG boosting classifier max_depth 3 subsample 0.5": partial(XGBClassifier, random_state=random_state, max_depth=3, subsample=0.5, n_jobs=10),
+            "XG boosting classifier max_depth 3 subsample 0.1": partial(XGBClassifier, random_state=random_state, max_depth=3, subsample=0.1, n_jobs=10),
+            "XG boosting classifier max_depth 6 subsample 1": partial(XGBClassifier, random_state=random_state, max_depth=6, subsample=1, n_jobs=10),
+            "XG boosting classifier max_depth 6 subsample 0.5": partial(XGBClassifier, random_state=random_state, max_depth=6, subsample=0.5, n_jobs=10),
+            "XG boosting classifier max_depth 6 subsample 0.1": partial(XGBClassifier, random_state=random_state, max_depth=6, subsample=0.1, n_jobs=10)
         }
 
         self.metrics = {
