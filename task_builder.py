@@ -11,7 +11,7 @@ class TaskBuilder:
         self.random_state = random_state
         self.task_dict = {
             "maalej_2016": Task(data_getter_fn=self.get_maalej_2016, is_multilabel=True),
-            "maalej_bug_bin_2016": Task(data_getter_fn=self.get_bin_df_function(self.get_maalej_2016, "bug"), is_multilabel=True),
+            "maalej_bug_bin_2016": Task(data_getter_fn=self.get_bin_df_function(self.get_maalej_2016, "bug"), is_multilabel=False),
             "maalej_small_2016": Task(data_getter_fn=self.get_small_df_function(self.get_maalej_2016), is_multilabel=True),
 
             "williams_2017": Task(data_getter_fn=self.get_williams_2017, is_multilabel=False),
@@ -28,7 +28,7 @@ class TaskBuilder:
             "di_sorbo_small_2017": Task(data_getter_fn=self.get_small_df_function(self.get_di_sorbo_2017), is_multilabel=False),
 
             "guzman_2015": Task(data_getter_fn=self.get_guzman_2015, is_multilabel=True),
-            "guzman_bug_bin_2015": Task(data_getter_fn=self.get_bin_df_function(self.get_guzman_2015, "bug"), is_multilabel=True),
+            "guzman_bug_bin_2015": Task(data_getter_fn=self.get_bin_df_function(self.get_guzman_2015, "bug"), is_multilabel=False),
             "guzman_small_2015": Task(data_getter_fn=self.get_small_df_function(self.get_guzman_2015), is_multilabel=True),
 
             "scalabrino_2017": Task(data_getter_fn=self.get_scalabrino_2017, is_multilabel=False),
@@ -65,10 +65,19 @@ class TaskBuilder:
         def bin_df():
             train, valid, test = df_fn()
 
-            label_binarizer = lambda x: bin_label if bin_label.lower() in x.lower() else f"other"
-            train["label"] = train["label"].apply(label_binarizer)
-            valid["label"] = valid["label"].apply(label_binarizer)
-            test["label"] = test["label"].apply(label_binarizer)
+            if "label" in train.columns:
+                label_binarizer = lambda x: bin_label if bin_label.lower() in x.lower() else f"other"
+                train["label"] = train["label"].apply(label_binarizer)
+                valid["label"] = valid["label"].apply(label_binarizer)
+                test["label"] = test["label"].apply(label_binarizer)
+            else:
+                target_columns = [x for x in train.columns if bin_label.lower() in x]
+                assert len(target_columns) == 1, f"Columns for binarizing are ambiguous. Expected to find one column with {bin_label} in it, but found {target_columns}"
+                target_column = target_columns[0]
+                label_binarizer = lambda x: bin_label if x else f"other"
+                train["label"] = train[target_column].apply(label_binarizer)
+                valid["label"] = valid[target_column].apply(label_binarizer)
+                test["label"] = test[target_column].apply(label_binarizer)
 
             return train, valid, test
         return bin_df
@@ -574,7 +583,7 @@ class TaskBuilder:
         df.label = df.label.apply(forum_label_transformer)
 
         df = df.rename(columns={'sentence': 'text'})
-        
+
         df = df[~df.text.duplicated()]
 
         train_and_val = df.sample(frac=0.7, random_state=self.random_state)
