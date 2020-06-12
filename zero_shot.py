@@ -14,7 +14,7 @@ class LMZeroShot:
     # Here, we supply our model which we want to generate predictions on the test inputs from a different dataset to the one the model was trained on
     # We supply the model_mapping, which shows which integers line up with which labels in the model output
     # We also find which integers align with which labels in the label encodings
-    def create_zero_shot_eval_engine(self, model, zero_shot_label, model_mapping, label_mapping, cpu):
+    def create_zero_shot_eval_engine(self, model, zero_shot_label, model_mapping, label_mapping, is_test_multilabel, cpu):
 
         # Iterate through all labels in both the train and test sets to see which labels correspond to the zero shot label (the unifying label)
         model_target_int = [int for label, int in model_mapping.items() if zero_shot_label in label.lower()]
@@ -22,7 +22,7 @@ class LMZeroShot:
 
         # There should only be one unifying label in each dataset (Possible TODO: Allow multiple labels to map to one unifying label)
         assert len(model_target_int) == 1, f"Ambiguous or empty model label list when trying to map {zero_shot_label} to {model_target_int}"
-        assert len(label_target_int) == 1, f"Ambiguous or empty gold label list when trying to map {zero_shot_label} to {model_target_int}"
+        assert len(label_target_int) == 1, f"Ambiguous or empty gold label list when trying to map {zero_shot_label} to {label_target_int}"
 
         model_target_int = model_target_int[0]
         label_target_int = label_target_int[0]
@@ -50,8 +50,12 @@ class LMZeroShot:
             # In this, 0 is out of class, whilst 1 is in class, so the combined tensor has the out of class probabilities in the 0th column and the in-class probs in the 1st column.
             pred = torch.cat((pred_out_class_prob, pred_in_class_prob), dim=1)
 
-            # To correspond to the above contructed tensor, we set the golds as 1 (I.e. True) if the gold label is the zero-shot label, and 0 (False) if not.
-            gold = (gold == label_target_int).long()
+            if is_test_multilabel:
+                # If test task is multilabel, get the values from the appropriate column of the truth labels
+                gold = gold[:, label_target_int]
+            else:
+                # To correspond to the above contructed tensor, we set the golds as 1 (I.e. True) if the gold label is the zero-shot label, and 0 (False) if not.
+                gold = (gold == label_target_int).long()
 
             return pred, gold
 
@@ -92,7 +96,7 @@ class LMZeroShot:
             with torch.no_grad():
                 for test_task_name, test_task in test_task_dict.items():
                     torch.cuda.empty_cache()
-                    zero_shot_eval_engine = self.create_zero_shot_eval_engine(task.model, PARAMS.zero_shot_label, task.label_map, test_task.label_map, PARAMS.cpu)
+                    zero_shot_eval_engine = self.create_zero_shot_eval_engine(task.model, PARAMS.zero_shot_label, task.label_map, test_task.label_map, test_task.is_multilabel, PARAMS.cpu)
 
                     lm_zero_shot_results[task_name][test_task_name] = zero_shot_eval_engine.run(test_task.test_data).metrics
 
