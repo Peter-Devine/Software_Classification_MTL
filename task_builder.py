@@ -71,10 +71,10 @@ class TaskBuilder:
                 valid["label"] = valid["label"].apply(label_binarizer)
                 test["label"] = test["label"].apply(label_binarizer)
             else:
-                target_columns = [x for x in train.columns if bin_label.lower() in x]
-                assert len(target_columns) == 1, f"Columns for binarizing are ambiguous. Expected to find one column with {bin_label} in it, but found {target_columns}"
+                target_columns = [x for x in train.columns if bin_label.lower() in x.lower()]
+                assert len(target_columns) == 1, f"Columns for binarizing are ambiguous. Expected to find one column with {bin_label} in it, but found {target_columns} out of {train.columns}"
                 target_column = target_columns[0]
-                label_binarizer = lambda x: bin_label if x else f"other"
+                label_binarizer = lambda x: bin_label if x==True else f"other"
                 train["label"] = train[target_column].apply(label_binarizer)
                 valid["label"] = valid[target_column].apply(label_binarizer)
                 test["label"] = test[target_column].apply(label_binarizer)
