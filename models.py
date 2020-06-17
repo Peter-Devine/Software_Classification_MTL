@@ -26,7 +26,7 @@ def get_cls_model_and_optimizer(language_model, n_classes, PARAMS):
     else:
         cls_lm = cls_lm.cuda()
 
- 
+
     no_decay = ["bias", "LayerNorm.weight"]
 
     optimizer_grouped_parameters = [
@@ -34,7 +34,7 @@ def get_cls_model_and_optimizer(language_model, n_classes, PARAMS):
               "params": [p for n, p in cls_lm.named_parameters() if not any(nd in n for nd in no_decay)],
               "weight_decay": PARAMS.weight_decay,
           },
-          {"params": [p for n, p in cls_lm.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": PARAMS.weight_decay},
+          {"params": [p for n, p in cls_lm.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
       ]
 
     optimizer = AdamW(optimizer_grouped_parameters, lr=PARAMS.learning_rate, eps=PARAMS.epsilon)
