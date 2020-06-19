@@ -135,7 +135,7 @@ class BaselineModels:
             # If multilabel, get the column which has our target label in the title (And assert that it indeed is there)
             label_column_names = [x for x in df.columns if zero_shot_label in x.lower()]
             assert len(label_column_names) == 1, f"Not exactly one column name that corresponds to zero shot label {zero_shot_label} ({df.columns})"
-            label_column_names = label_column_names[0]
+            label_column_name = label_column_names[0]
             df_labels = df[label_column_name].apply(lambda x: True if x else False)
         else:
             # Only check if there are any positive labels in train set (I.e. not valid/test set) as without positive labels we cannot train

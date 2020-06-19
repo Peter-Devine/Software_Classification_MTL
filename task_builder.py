@@ -10,9 +10,9 @@ class TaskBuilder:
     def __init__(self, random_state):
         self.random_state = random_state
         self.task_dict = {
-            "maalej_2016": Task(data_getter_fn=self.get_maalej_2016, is_multilabel=False),
+            "maalej_2016": Task(data_getter_fn=self.get_maalej_2016, is_multilabel=True),
             "maalej_bug_bin_2016": Task(data_getter_fn=self.get_bin_df_function(self.get_maalej_2016, "bug"), is_multilabel=False),
-            "maalej_small_2016": Task(data_getter_fn=self.get_small_df_function(self.get_maalej_2016), is_multilabel=False),
+            "maalej_small_2016": Task(data_getter_fn=self.get_small_df_function(self.get_maalej_2016), is_multilabel=True),
 
             "williams_2017": Task(data_getter_fn=self.get_williams_2017, is_multilabel=False),
             "williams_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_williams_2017, "bug"), is_multilabel=False),
@@ -27,9 +27,9 @@ class TaskBuilder:
             "di_sorbo_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_di_sorbo_2017, "bug"), is_multilabel=False),
             "di_sorbo_small_2017": Task(data_getter_fn=self.get_small_df_function(self.get_di_sorbo_2017), is_multilabel=False),
 
-            "guzman_2015": Task(data_getter_fn=self.get_guzman_2015, is_multilabel=False),
+            "guzman_2015": Task(data_getter_fn=self.get_guzman_2015, is_multilabel=True),
             "guzman_bug_bin_2015": Task(data_getter_fn=self.get_bin_df_function(self.get_guzman_2015, "bug"), is_multilabel=False),
-            "guzman_small_2015": Task(data_getter_fn=self.get_small_df_function(self.get_guzman_2015), is_multilabel=False),
+            "guzman_small_2015": Task(data_getter_fn=self.get_small_df_function(self.get_guzman_2015), is_multilabel=True),
 
             "scalabrino_2017": Task(data_getter_fn=self.get_scalabrino_2017, is_multilabel=False),
             "scalabrino_bug_bin_2017": Task(data_getter_fn=self.get_bin_df_function(self.get_scalabrino_2017, "bug"), is_multilabel=False),
@@ -65,10 +65,19 @@ class TaskBuilder:
         def bin_df():
             train, valid, test = df_fn()
 
-            label_binarizer = lambda x: bin_label if bin_label.lower() in x.lower() else f"other"
-            train["label"] = train["label"].apply(label_binarizer)
-            valid["label"] = valid["label"].apply(label_binarizer)
-            test["label"] = test["label"].apply(label_binarizer)
+            if "label" in train.columns:
+                label_binarizer = lambda x: bin_label if bin_label.lower() in x.lower() else f"other"
+                train["label"] = train["label"].apply(label_binarizer)
+                valid["label"] = valid["label"].apply(label_binarizer)
+                test["label"] = test["label"].apply(label_binarizer)
+            else:
+                target_columns = [x for x in train.columns if bin_label.lower() in x.lower()]
+                assert len(target_columns) == 1, f"Columns for binarizing are ambiguous. Expected to find one column with {bin_label} in it, but found {target_columns} out of {train.columns}"
+                target_column = target_columns[0]
+                label_binarizer = lambda x: bin_label if x==True else f"other"
+                train["label"] = train[target_column].apply(label_binarizer)
+                valid["label"] = valid[target_column].apply(label_binarizer)
+                test["label"] = test[target_column].apply(label_binarizer)
 
             return train, valid, test
         return bin_df
@@ -83,6 +92,18 @@ class TaskBuilder:
 
             return train, valid, test
         return bin_df
+
+    def make_single_label_multi_label(self, df):
+        multi_label_dict = {}
+
+        text_grouped_df = df.groupby("text")["label"].unique()
+
+        multi_label_dict["text"] = text_grouped_df.index
+
+        for unique_label in df.label.unique():
+            multi_label_dict[f"label_{unique_label}"] = [unique_label in row for row in text_grouped_df]
+
+        return pd.DataFrame(multi_label_dict)
 
 
     ######### INDIVIDUAL DATA GETTERS ############
@@ -111,9 +132,11 @@ class TaskBuilder:
 
         shutil.rmtree(task_data_path)
 
-        df = pd.DataFrame({"text": [
-            "Title: " + x["title"] + " Comment: " + x["comment"] if x["title"] is not None else "Comment: " + x[
-                "comment"] for x in data], "label": [x["label"] for x in data]})
+        df = pd.DataFrame({
+                            "text": [x["title"] + " " + x["comment"] if x["title"] is not None else x["comment"] for x in data],
+                            "label": [x["label"] for x in data]})
+
+        df = self.make_single_label_multi_label(df)
 
         train_and_val = df.sample(frac=0.8, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
@@ -200,6 +223,8 @@ class TaskBuilder:
             "is_reply": is_reply,
             "date_posted": date_posted
         })
+
+        df = df[~df.text.duplicated()]
 
         train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
@@ -352,6 +377,8 @@ class TaskBuilder:
                 data = f.read()
                 all_review_df = add_data_to_df(data, all_review_df)
 
+        all_review_df = all_review_df[~all_review_df.text.duplicated()]
+
         train_and_val = all_review_df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
         val = train_and_val.drop(train.index)
@@ -360,6 +387,7 @@ class TaskBuilder:
         return train, val, test
 
     def get_guzman_2015(self):
+
         df = pd.read_csv("https://ase.in.tum.de/lehrstuhl_1/images/publications/Emitza_Guzman_Ortega/truthset.tsv",
                          sep="\t", names=[0, "label", 2, "app", 4, "text"])
 
@@ -386,6 +414,8 @@ class TaskBuilder:
         }
 
         df["app"] = df.app.apply(lambda x: int_to_app_name_map[x])
+
+        df = self.make_single_label_multi_label(df)
 
         train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
@@ -428,6 +458,8 @@ class TaskBuilder:
         df = pd.read_csv("https://dibt.unimol.it/reports/clap/downloads/rq3-manually-classified-implemented-reviews.csv")
 
         df = df.rename(columns = {"body": "text", "category": "label"})
+
+        df = df[~df.text.duplicated()]
 
         # We take out a randomly sampled one of every label to make sure that the training dataset has one label for each class
         unique_df = df.groupby('label',as_index = False,group_keys=False).apply(lambda s: s.sample(1, random_state=self.random_state))
@@ -551,6 +583,8 @@ class TaskBuilder:
         df.label = df.label.apply(forum_label_transformer)
 
         df = df.rename(columns={'sentence': 'text'})
+
+        df = df[~df.text.duplicated()]
 
         train_and_val = df.sample(frac=0.7, random_state=self.random_state)
         train = train_and_val.sample(frac=0.7, random_state=self.random_state)
