@@ -132,7 +132,7 @@ class NeptuneLogger:
         ax1.yaxis.set_visible(False)
 
         # We get the statistical test data only
-        stat_test_df = df[[f"T-test p val", f"Wilcoxon p val"]]
+        stat_test_df = df[[f"{p_val_column} T-test p val", f"{p_val_column} Wilcoxon p val"]]
 
         # We colour the cell green if the statistical test falls below our threshold
         certainty_threshold = 0.05
@@ -141,7 +141,7 @@ class NeptuneLogger:
 
         table = ax1.table(
                 cellText=stat_test_df.applymap('{:,.3f}'.format).T.values.tolist(),
-                rowLabels=[f"{p_val_column} T-test p val", f"{p_val_column} Wilc p val"],
+                rowLabels=[f"T-test p val", f"Wilc p val"],
                 cellColours=cell_colours.T.values.tolist(),
                 loc='center',
                 cellLoc='center'
