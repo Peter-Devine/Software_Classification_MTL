@@ -69,6 +69,7 @@ def get_indomain_single_task_results(results_dict, logger):
         logger.log_text("Overall results", counter, "\n")
 
     results_df = pd.DataFrame(pan_dataset_results_list, index=dataset_names)
+    results_df = results_df.sort_index()
 
     return results_df
 
@@ -165,6 +166,8 @@ def get_outdomain_single_task_results(results_dict, logger):
         })
 
     zero_shot_results_df = pd.DataFrame(zero_shot_results, index=dnn_run_values.keys())
+
+    zero_shot_results_df = zero_shot_results_df.sort_index()
 
     dnn_all_zero_shot_results = pd.DataFrame(dnn_run_values).applymap(lambda x: statistics.mean(x))
     classical_bin_all_zero_shot_results = pd.DataFrame(classical_binary_run_values).applymap(lambda x: statistics.mean(x))
