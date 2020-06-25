@@ -116,7 +116,7 @@ class NeptuneLogger:
 
         for i, run_type in enumerate(run_types):
             # We offset the bars so that all series of data for one given test dataset take up less than 1 unit of space
-            bar_offset = (i/(1.5*len(run_types))) - 0.5
+            bar_offset = (i/(1.5*len(run_types))) - 0.25
 
             # Plot a bar for all run types for each dataset, with the error for each dataset
             bar_list.append(ax0.bar(x+bar_offset, df[f"{run_type} average F1"], width=width, align='center', yerr=df[f"{run_type} average F1 stdev"]))
