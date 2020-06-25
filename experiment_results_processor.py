@@ -2,7 +2,7 @@ import scipy.stats
 import pandas as pd
 import statistics
 
-def get_stats_for_two_lists(list_of_vals_0, list_of_vals_1):
+def get_stats_for_two_lists(list_of_vals_0, list_of_vals_1, paired=True):
 
     mean_0 = statistics.mean(list_of_vals_0) if len(list_of_vals_0) > 0 else 0
     stdev_0 = statistics.stdev(list_of_vals_0) if len(list_of_vals_0) > 0 else 0
@@ -10,7 +10,11 @@ def get_stats_for_two_lists(list_of_vals_0, list_of_vals_1):
     mean_1 = statistics.mean(list_of_vals_1) if len(list_of_vals_1) > 0 else 0
     stdev_1 = statistics.stdev(list_of_vals_1) if len(list_of_vals_1) > 0 else 0
 
-    ttest_p_val = scipy.stats.ttest_rel(list_of_vals_0, list_of_vals_1).pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
+    if paired:
+        ttest_p_val = scipy.stats.ttest_rel(list_of_vals_0, list_of_vals_1).pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
+    else:
+        ttest_p_val = scipy.stats.ttest_ind(list_of_vals_0, list_of_vals_1).pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
+
     wilcoxon_p_val = scipy.stats.wilcoxon(list_of_vals_0, list_of_vals_1, alternative="two-sided").pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
 
     return mean_0, stdev_0, mean_1, stdev_1, ttest_p_val, wilcoxon_p_val
@@ -300,7 +304,7 @@ def get_outdomain_mtl_results(results_dict, logger):
                 dnn_st_zero_shot_vals.extend(dnn_st_run_values[test_task_name][train_task_name])
 
         classical_bin_zs_avg, classical_bin_zs_sd, dnn_zs_avg, dnn_zs_sd, zs_bin_ttest_p_val, zs_bin_wilcoxon_p_val = get_stats_for_two_lists(classical_bin_zero_shot_vals, dnn_zero_shot_vals)
-        dnn_st_zs_avg, dnn_st_zs_sd, _, _, zs_st_mtl_dnn_ttest_p_val, zs_st_mtl_dnn_wilcoxon_p_val = get_stats_for_two_lists(dnn_st_zero_shot_vals, dnn_zero_shot_vals)
+        dnn_st_zs_avg, dnn_st_zs_sd, _, _, zs_st_mtl_dnn_ttest_p_val, zs_st_mtl_dnn_wilcoxon_p_val = get_stats_for_two_lists(dnn_st_zero_shot_vals, dnn_zero_shot_vals, paired=False)
 
         zero_shot_results.append({
             "DNN MTL zero-shot average F1": dnn_zs_avg,
