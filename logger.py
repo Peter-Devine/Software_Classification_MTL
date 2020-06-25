@@ -99,7 +99,7 @@ class NeptuneLogger:
 
     def save_avg_f1_graph(self, df, experiment_name, run_types, p_val_column):
         # Create 2 plots, one taking up most of the vertical axis, and a small table beneath that
-        fig = plt.figure(figsize=(15,8))
+        fig = plt.figure(figsize=(11,6))
         gs = fig.add_gridspec(20, 1)
         ax0 = fig.add_subplot(gs[0:15, :])
         ax1 = fig.add_subplot(gs[16:, :])
@@ -123,7 +123,7 @@ class NeptuneLogger:
 
         ax0.legend(bar_list, run_types, loc=1)
         ax0.set_xticks(x)
-        ax0.set_xticklabels(df.index)
+        ax0.set_xticklabels([label.replace("_bug_bin", "").replace("_", " ") for label in df.index])
         ax0.set_xlabel("Dataset")
         ax0.set_ylabel("Average F1")
 
