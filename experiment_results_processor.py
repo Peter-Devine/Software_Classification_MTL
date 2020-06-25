@@ -12,10 +12,10 @@ def get_stats_for_two_lists(list_of_vals_0, list_of_vals_1, paired=True):
 
     if paired:
         ttest_p_val = scipy.stats.ttest_rel(list_of_vals_0, list_of_vals_1).pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
+        wilcoxon_p_val = scipy.stats.wilcoxon(list_of_vals_0, list_of_vals_1, alternative="two-sided").pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
     else:
         ttest_p_val = scipy.stats.ttest_ind(list_of_vals_0, list_of_vals_1).pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
-
-    wilcoxon_p_val = scipy.stats.wilcoxon(list_of_vals_0, list_of_vals_1, alternative="two-sided").pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
+        wilcoxon_p_val = scipy.stats.ranksums(list_of_vals_0, list_of_vals_1).pvalue if len(list_of_vals_0) > 0 and len(list_of_vals_1) > 0 else 1
 
     return mean_0, stdev_0, mean_1, stdev_1, ttest_p_val, wilcoxon_p_val
 
