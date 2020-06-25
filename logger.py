@@ -99,7 +99,7 @@ class NeptuneLogger:
 
     def save_avg_f1_graph(self, df, experiment_name, run_types, p_val_column):
         # Create 2 plots, one taking up most of the vertical axis, and a small table beneath that
-        fig = plt.figure(figsize=(22,12))
+        fig = plt.figure(figsize=(15,8))
         gs = fig.add_gridspec(20, 1)
         ax0 = fig.add_subplot(gs[0:15, :])
         ax1 = fig.add_subplot(gs[16:, :])
