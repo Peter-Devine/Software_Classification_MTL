@@ -250,7 +250,7 @@ def get_outdomain_mtl_results(results_dict, logger):
     ft_single_task_results_names = [run_name for run_name in results_dict.keys() if "single_task_zero_shot_test_metrics" in run_name]
 
     # Gets the dataset names (E.g. di_sorbo_2017, maalej_2016) from the files in the output folder
-    dataset_names = sorted(list(set(["_".join(run_name.replace("_single_task_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_results_names])))
+    dataset_names = sorted(list(set(["_".join(run_name.replace("_single_task_zero_shot_test_metrics","").split("_")[:-1]) for run_name in ft_single_task_results_names])))
 
     # Make a dictionary that holds a list of values for each test dataset
     dnn_st_run_values = {}
