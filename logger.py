@@ -121,7 +121,7 @@ class NeptuneLogger:
             # Plot a bar for all run types for each dataset, with the error for each dataset
             bar_list.append(ax0.bar(x+bar_offset, df[f"{run_type} average F1"], width=width, align='center', yerr=df[f"{run_type} average F1 stdev"]))
 
-        ax0.legend(bar_list, run_types, loc=1)
+        ax0.legend(bar_list, run_types, loc=4)
         ax0.set_xticks(x)
         ax0.set_xticklabels([label.replace("_bug_bin", "").replace("_", " ") for label in df.index])
         ax0.set_xlabel("Dataset")
@@ -132,7 +132,7 @@ class NeptuneLogger:
         ax1.yaxis.set_visible(False)
 
         # We get the statistical test data only
-        stat_test_df = df[[f"{p_val_column} T-test p val", f"{p_val_column} Wilcoxon p val"]]
+        stat_test_df = df[[f"T-test p val", f"Wilcoxon p val"]]
 
         # We colour the cell green if the statistical test falls below our threshold
         certainty_threshold = 0.05
