@@ -318,6 +318,7 @@ def get_outdomain_mtl_results(results_dict, logger):
         })
 
     zero_shot_results_df = pd.DataFrame(zero_shot_results, index=dnn_run_values.keys())
+    zero_shot_results_df = zero_shot_results_df.sort_index()
 
     dnn_all_zero_shot_results = pd.DataFrame(dnn_run_values).applymap(lambda x: statistics.mean(x))
     classical_bin_all_zero_shot_results = pd.DataFrame(classical_binary_run_values).applymap(lambda x: statistics.mean(x))
